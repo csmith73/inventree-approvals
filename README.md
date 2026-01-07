@@ -14,16 +14,27 @@ A plugin for [InvenTree](https://inventree.org) that adds an approval workflow t
 
 ## Installation
 
-### Via pip (recommended)
+### Via InvenTree GUI (recommended)
+
+1. In InvenTree, go to **Settings** → **Plugin Settings** → **Install Plugin**
+2. Fill in the following:
+   - **Package Name**: `inventree-approvals`
+   - **Source URL**: `git+https://github.com/csmith73/inventree-approvals.git`
+   - **Version**: Leave blank for latest
+3. Toggle **Confirm plugin installation** to ON
+4. Click **Install**
+5. The server will restart to apply the plugin
+
+### Via pip
 
 ```bash
-pip install inventree-approvals
+pip install git+https://github.com/csmith73/inventree-approvals.git
 ```
 
-### From source
+### From source (development)
 
 ```bash
-git clone https://github.com/your-org/inventree-approvals.git
+git clone https://github.com/csmith73/inventree-approvals.git
 cd inventree-approvals
 pip install -e .
 ```
