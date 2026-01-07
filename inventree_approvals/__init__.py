@@ -1,0 +1,3 @@
+"""InvenTree Purchase Order Approvals Plugin."""
+
+__version__ = '1.0.0'

@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "inventree-approvals"
+version = "1.0.0"
+description = "Purchase Order Approvals Plugin for InvenTree"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "InvenTree Approvals Plugin", email = "approvals@example.com"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Plugins",
+    "Framework :: Django",
+    "Intended Audience :: Manufacturing",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business",
+]
+keywords = ["inventree", "plugin", "approvals", "purchase-order", "workflow"]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/your-org/inventree-approvals"
+Documentation = "https://github.com/your-org/inventree-approvals#readme"
+Repository = "https://github.com/your-org/inventree-approvals"
+
+[project.entry-points."inventree_plugins"]
+POApprovalsPlugin = "inventree_approvals.approvals_plugin:POApprovalsPlugin"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+"inventree_approvals" = ["static/**/*"]
