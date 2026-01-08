@@ -428,7 +428,7 @@ def send_approval_request_email(order, approval, requested_approver, request):
 
     try:
         # Build the order URL
-        order_url = construct_absolute_url(f'/purchasing/purchase-order/{order.pk}')
+        order_url = construct_absolute_url(f'/web/purchasing/purchase-order/{order.pk}/po-approvals-panel')
 
         # Determine recipients
         if requested_approver and requested_approver.email:
@@ -513,7 +513,7 @@ def send_teams_webhook(order, request, plugin):
             return False
 
         # Build the order URL
-        order_url = construct_absolute_url(f'/purchasing/purchase-order/{order.pk}')
+        order_url = construct_absolute_url(f'/web/purchasing/purchase-order/{order.pk}/po-approvals-panel')
         
         # Get supplier name
         supplier_name = order.supplier.name if order.supplier else 'Unknown Supplier'
@@ -631,7 +631,7 @@ def send_decision_notification_email(order, approval, approved=True):
             return False
 
         # Build the order URL
-        order_url = construct_absolute_url(f'/purchasing/purchase-order/{order.pk}')
+        order_url = construct_absolute_url(f'/web/purchasing/purchase-order/{order.pk}/po-approvals-panel')
 
         # Build subject and body based on decision
         decision_word = 'Approved' if approved else 'Rejected'
