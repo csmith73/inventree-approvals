@@ -1,588 +1,339 @@
-/**
- * Purchase Order Approvals Panel for InvenTree.
- *
- * This panel displays approval status and provides approval workflow controls
- * for Purchase Orders.
- */
-
-/**
- * Main render function for the approvals panel
- */
-export function renderPanel(target, data) {
-    if (!target) {
-        console.error("No target provided to approvals panel");
-        return;
+import { useState as c, useEffect as L, useCallback as N, createElement as G } from "react";
+import X from "react-dom";
+import { jsx as e, jsxs as s, Fragment as Y } from "react/jsx-runtime";
+import { Text as y, Table as a, Badge as F, Stack as E, Modal as H, LoadingOverlay as U, Alert as w, Select as J, Textarea as W, Group as z, Button as b, Loader as K, Paper as Q } from "@mantine/core";
+import { IconAlertCircle as V, IconAlertTriangle as k, IconFileDescription as Z, IconCheck as D, IconX as ee } from "@tabler/icons-react";
+var x, j = X;
+if (process.env.NODE_ENV === "production")
+  x = j.createRoot, j.hydrateRoot;
+else {
+  var I = j.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+  x = function(r, o) {
+    I.usingClientEntryPoint = !0;
+    try {
+      return j.createRoot(r, o);
+    } finally {
+      I.usingClientEntryPoint = !1;
     }
-
-    const orderId = data.context?.order_id || data.id;
-    const pluginSlug = data.context?.plugin_slug || 'approvals';
-
-    // Show loading state
-    target.innerHTML = `
-        <div style="padding: 16px; text-align: center;">
-            <p>Loading approval status...</p>
-        </div>
-    `;
-
-    // Fetch approval status
-    fetchApprovalStatus(orderId, pluginSlug)
-        .then(statusData => {
-            renderApprovalPanel(target, statusData, orderId, pluginSlug, data);
-        })
-        .catch(error => {
-            target.innerHTML = `
-                <div style="padding: 16px; color: #d32f2f;">
-                    <p>Error loading approval status: ${error.message}</p>
-                </div>
-            `;
-        });
+  };
 }
-
-/**
- * Fetch approval status from the API
- */
-async function fetchApprovalStatus(orderId, pluginSlug) {
-    const response = await fetch(`/plugin/${pluginSlug}/po/${orderId}/status/`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'same-origin',
-    });
-
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+function re(r) {
+  switch (r) {
+    case "approved":
+      return { color: "green", label: "✓ Approved" };
+    case "rejected":
+      return { color: "red", label: "✗ Rejected" };
+    case "pending":
+      return { color: "yellow", label: "⏳ Pending" };
+    default:
+      return { color: "gray", label: r };
+  }
+}
+function M(r) {
+  if (!r) return "-";
+  try {
+    return new Date(r).toLocaleString();
+  } catch {
+    return r;
+  }
+}
+function ne({ approvals: r }) {
+  if (r.length === 0)
+    return /* @__PURE__ */ e(y, { c: "dimmed", fs: "italic", size: "sm", children: "No approvals yet" });
+  const o = r.map((t, i) => {
+    const { color: p, label: d } = re(t.status);
+    return /* @__PURE__ */ s(a.Tr, { children: [
+      /* @__PURE__ */ s(a.Td, { children: [
+        "Level ",
+        t.level
+      ] }),
+      /* @__PURE__ */ e(a.Td, { children: /* @__PURE__ */ e(F, { color: p, variant: "filled", size: "sm", children: d }) }),
+      /* @__PURE__ */ e(a.Td, { children: t.requested_by_name || "-" }),
+      /* @__PURE__ */ e(a.Td, { children: t.status === "pending" ? t.requested_approver_name || "Any" : t.actual_approver_name || "-" }),
+      /* @__PURE__ */ e(a.Td, { children: /* @__PURE__ */ e(y, { size: "xs", c: "dimmed", children: M(t.requested_at) }) }),
+      /* @__PURE__ */ e(a.Td, { children: /* @__PURE__ */ e(y, { size: "xs", c: "dimmed", children: t.status !== "pending" ? M(t.decided_at) : "-" }) })
+    ] }, i);
+  });
+  return /* @__PURE__ */ s(E, { gap: "xs", children: [
+    /* @__PURE__ */ e(y, { fw: 500, size: "sm", children: "Approval History" }),
+    /* @__PURE__ */ s(a, { striped: !0, highlightOnHover: !0, withTableBorder: !0, withColumnBorders: !0, children: [
+      /* @__PURE__ */ e(a.Thead, { children: /* @__PURE__ */ s(a.Tr, { children: [
+        /* @__PURE__ */ e(a.Th, { children: "Level" }),
+        /* @__PURE__ */ e(a.Th, { children: "Status" }),
+        /* @__PURE__ */ e(a.Th, { children: "Requested By" }),
+        /* @__PURE__ */ e(a.Th, { children: "Approver" }),
+        /* @__PURE__ */ e(a.Th, { children: "Requested" }),
+        /* @__PURE__ */ e(a.Th, { children: "Decided" })
+      ] }) }),
+      /* @__PURE__ */ e(a.Tbody, { children: o })
+    ] })
+  ] });
+}
+function te({
+  opened: r,
+  onClose: o,
+  onSuccess: t,
+  orderId: i,
+  pluginSlug: p,
+  isHighValue: d,
+  api: v
+}) {
+  const [m, f] = c(!1), [n, h] = c(null), [T, g] = c([]), [A, S] = c(null), [C, q] = c("");
+  L(() => {
+    r && (h(null), u());
+  }, [r]);
+  async function u() {
+    try {
+      const l = d ? "?is_high_value=true" : "", $ = await v.get(
+        `/plugin/${p}/users/${l}`
+      );
+      g($.results);
+    } catch (l) {
+      console.error("Failed to load approvers:", l), g([]);
     }
-
-    return response.json();
-}
-
-/**
- * Fetch available approvers
- */
-async function fetchApprovers(pluginSlug, isHighValue = false) {
-    const params = new URLSearchParams();
-    if (isHighValue) {
-        params.append('is_high_value', 'true');
-    }
-    
-    const queryString = params.toString();
-    const url = `/plugin/${pluginSlug}/users/${queryString ? `?${queryString}` : ''}`;
-    const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'same-origin',
-    });
-
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-    }
-
-    return response.json();
-}
-
-/**
- * Request approval API call
- */
-async function requestApproval(orderId, pluginSlug, approverId, notes) {
-    const csrfToken = getCSRFToken();
-    
-    const response = await fetch(`/plugin/${pluginSlug}/po/${orderId}/request/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken,
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-            approver_id: approverId || null,
-            notes: notes || '',
-        }),
-    });
-
-    return response.json();
-}
-
-/**
- * Approve/Reject API call
- */
-async function submitApprovalDecision(orderId, pluginSlug, approved, notes) {
-    const csrfToken = getCSRFToken();
-    const endpoint = approved ? 'approve' : 'reject';
-    
-    const response = await fetch(`/plugin/${pluginSlug}/po/${orderId}/${endpoint}/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken,
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-            notes: notes || '',
-        }),
-    });
-
-    return response.json();
-}
-
-/**
- * Get CSRF token from cookies
- */
-function getCSRFToken() {
-    const name = 'csrftoken';
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === `${name}=`) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
+  }
+  async function _() {
+    f(!0), h(null);
+    try {
+      const l = await v.post(
+        `/plugin/${p}/po/${i}/request/`,
+        {
+          approver_id: A,
+          notes: C
         }
+      );
+      l.success ? (q(""), S(null), t(), o()) : h(l.error || "Failed to request approval");
+    } catch (l) {
+      h(l instanceof Error ? l.message : "An error occurred");
+    } finally {
+      f(!1);
     }
-    return cookieValue;
-}
-
-/**
- * Render the main approval panel content
- */
-function renderApprovalPanel(target, statusData, orderId, pluginSlug, contextData) {
-    const approvedCount = statusData.approved_count || 0;
-    const totalRequired = statusData.total_required || 2;
-    const isFullyApproved = statusData.is_fully_approved;
-    const hasPending = statusData.has_pending;
-    const canRequest = statusData.can_request_approval;
-    const userCanApprove = statusData.user_can_approve;
-    const approvals = statusData.approvals || [];
-    const isHighValue = statusData.is_high_value;
-
-    // Status badge
-    let statusBadge = '';
-    let statusColor = '';
-    if (isFullyApproved) {
-        statusBadge = '✓ Approved';
-        statusColor = '#4caf50';
-    } else if (hasPending) {
-        statusBadge = `${approvedCount}/${totalRequired} (Pending)`;
-        statusColor = '#ff9800';
-    } else {
-        statusBadge = `${approvedCount}/${totalRequired}`;
-        statusColor = '#2196f3';
-    }
-
-    const html = `
-        <div style="padding: 16px;">
-            <!-- Header with status -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h4 style="margin: 0;">Approval Status</h4>
-                <span style="
-                    background-color: ${statusColor};
-                    color: white;
-                    padding: 4px 12px;
-                    border-radius: 12px;
-                    font-weight: bold;
-                    font-size: 14px;
-                ">${statusBadge}</span>
-            </div>
-
-            ${isHighValue ? `
-                <div style="
-                    background-color: #fff3e0;
-                    border: 1px solid #ff9800;
-                    border-radius: 4px;
-                    padding: 8px 12px;
-                    margin-bottom: 16px;
-                ">
-                    <strong>⚠️ High Value Order</strong> - Requires senior approver
-                </div>
-            ` : ''}
-
-            <!-- Approvals table -->
-            <div style="margin-bottom: 16px;">
-                <h5 style="margin-bottom: 8px;">Approval History</h5>
-                ${approvals.length > 0 ? renderApprovalsTable(approvals) : `
-                    <p style="color: #666; font-style: italic;">No approvals yet</p>
-                `}
-            </div>
-
-            <!-- Action buttons -->
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                ${canRequest ? `
-                    <button 
-                        id="btn-request-approval"
-                        style="
-                            background-color: #1976d2;
-                            color: white;
-                            border: none;
-                            padding: 8px 16px;
-                            border-radius: 4px;
-                            cursor: pointer;
-                            font-size: 14px;
-                        "
-                    >
-                        📝 Request Approval
-                    </button>
-                ` : ''}
-                
-                ${userCanApprove ? `
-                    <button 
-                        id="btn-approve"
-                        style="
-                            background-color: #4caf50;
-                            color: white;
-                            border: none;
-                            padding: 8px 16px;
-                            border-radius: 4px;
-                            cursor: pointer;
-                            font-size: 14px;
-                        "
-                    >
-                        ✓ Approve
-                    </button>
-                    <button 
-                        id="btn-reject"
-                        style="
-                            background-color: #f44336;
-                            color: white;
-                            border: none;
-                            padding: 8px 16px;
-                            border-radius: 4px;
-                            cursor: pointer;
-                            font-size: 14px;
-                        "
-                    >
-                        ✗ Reject
-                    </button>
-                ` : ''}
-
-                ${isFullyApproved ? `
-                    <div style="
-                        background-color: #e8f5e9;
-                        border: 1px solid #4caf50;
-                        border-radius: 4px;
-                        padding: 8px 16px;
-                        color: #2e7d32;
-                    ">
-                        ✓ Order can now be placed
-                    </div>
-                ` : ''}
-            </div>
-
-            ${!canRequest && !userCanApprove && !isFullyApproved ? `
-                <p style="color: #666; font-size: 13px; margin-top: 12px;">
-                    ${statusData.can_request_reason || statusData.user_can_approve_reason || 'Waiting for approval action'}
-                </p>
-            ` : ''}
-        </div>
-
-        <!-- Request Modal -->
-        <div id="request-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
-            <div style="
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: white;
-                padding: 24px;
-                border-radius: 8px;
-                min-width: 400px;
-                max-width: 90%;
-            ">
-                <h4 style="margin-top: 0;">Request Approval</h4>
-                <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">Select Approver (optional):</label>
-                    <select id="approver-select" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                        <option value="">-- Any Available Approver --</option>
-                    </select>
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">Notes (optional):</label>
-                    <textarea id="request-notes" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;"></textarea>
-                </div>
-                <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                    <button id="modal-cancel" style="padding: 8px 16px; border: 1px solid #ccc; background: white; border-radius: 4px; cursor: pointer;">Cancel</button>
-                    <button id="modal-submit" style="padding: 8px 16px; border: none; background: #1976d2; color: white; border-radius: 4px; cursor: pointer;">Submit Request</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Approve/Reject Modal -->
-        <div id="decision-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
-            <div style="
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: white;
-                padding: 24px;
-                border-radius: 8px;
-                min-width: 400px;
-                max-width: 90%;
-            ">
-                <h4 id="decision-title" style="margin-top: 0;">Approve Request</h4>
-                <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">Notes (optional):</label>
-                    <textarea id="decision-notes" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;"></textarea>
-                </div>
-                <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                    <button id="decision-cancel" style="padding: 8px 16px; border: 1px solid #ccc; background: white; border-radius: 4px; cursor: pointer;">Cancel</button>
-                    <button id="decision-submit" style="padding: 8px 16px; border: none; background: #4caf50; color: white; border-radius: 4px; cursor: pointer;">Submit</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    target.innerHTML = html;
-
-    // Attach event handlers
-    attachEventHandlers(target, orderId, pluginSlug, contextData, isHighValue);
-}
-
-/**
- * Render approvals table
- */
-function renderApprovalsTable(approvals) {
-    const rows = approvals.map(approval => {
-        let statusBadge = '';
-        let statusColor = '';
-        
-        switch (approval.status) {
-            case 'approved':
-                statusBadge = '✓ Approved';
-                statusColor = '#4caf50';
-                break;
-            case 'rejected':
-                statusBadge = '✗ Rejected';
-                statusColor = '#f44336';
-                break;
-            case 'pending':
-                statusBadge = '⏳ Pending';
-                statusColor = '#ff9800';
-                break;
-            default:
-                statusBadge = approval.status;
-                statusColor = '#757575';
+  }
+  const R = [
+    { value: "", label: "-- Any Available Approver --" },
+    ...d ? [] : [{ value: "teams_channel", label: "📢 Teams Purchasing Channel" }],
+    ...T.map((l) => ({
+      value: String(l.id),
+      label: `${l.full_name} (${l.username})`
+    }))
+  ];
+  return /* @__PURE__ */ s(H, { opened: r, onClose: o, title: "Request Approval", size: "md", children: [
+    /* @__PURE__ */ e(U, { visible: m }),
+    /* @__PURE__ */ s(E, { gap: "md", children: [
+      n && /* @__PURE__ */ e(w, { color: "red", icon: /* @__PURE__ */ e(V, { size: 16 }), children: n }),
+      /* @__PURE__ */ e(
+        J,
+        {
+          label: "Select Approver (optional)",
+          placeholder: "Select an approver",
+          data: R,
+          value: A,
+          onChange: S,
+          clearable: !0
         }
-
-        const requestedAt = approval.requested_at 
-            ? new Date(approval.requested_at).toLocaleString() 
-            : '-';
-        const decidedAt = approval.decided_at 
-            ? new Date(approval.decided_at).toLocaleString() 
-            : '-';
-
-        return `
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">Level ${approval.level}</td>
-                <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">
-                    <span style="
-                        background-color: ${statusColor};
-                        color: white;
-                        padding: 2px 8px;
-                        border-radius: 10px;
-                        font-size: 12px;
-                    ">${statusBadge}</span>
-                </td>
-                <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${approval.requested_by_name || '-'}</td>
-                <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">
-                    ${approval.status === 'pending' 
-                        ? (approval.requested_approver_name || 'Any') 
-                        : (approval.actual_approver_name || '-')}
-                </td>
-                <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; font-size: 12px; color: #666;">${requestedAt}</td>
-                <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; font-size: 12px; color: #666;">
-                    ${approval.status !== 'pending' ? decidedAt : '-'}
-                </td>
-            </tr>
-        `;
-    }).join('');
-
-    return `
-        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-            <thead>
-                <tr style="background-color: #f5f5f5;">
-                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #e0e0e0;">Level</th>
-                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #e0e0e0;">Status</th>
-                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #e0e0e0;">Requested By</th>
-                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #e0e0e0;">Approver</th>
-                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #e0e0e0;">Requested</th>
-                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #e0e0e0;">Decided</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${rows}
-            </tbody>
-        </table>
-    `;
+      ),
+      /* @__PURE__ */ e(
+        W,
+        {
+          label: "Notes (optional)",
+          placeholder: "Add any notes for the approver",
+          value: C,
+          onChange: (l) => q(l.currentTarget.value),
+          rows: 3
+        }
+      ),
+      /* @__PURE__ */ s(z, { justify: "flex-end", gap: "sm", children: [
+        /* @__PURE__ */ e(b, { variant: "default", onClick: o, children: "Cancel" }),
+        /* @__PURE__ */ e(b, { onClick: _, loading: m, children: "Submit Request" })
+      ] })
+    ] })
+  ] });
 }
-
-/**
- * Attach event handlers to buttons
- */
-function attachEventHandlers(target, orderId, pluginSlug, contextData, isHighValue = false) {
-    let isApproveAction = true;
-
-    // Request Approval button
-    const btnRequest = target.querySelector('#btn-request-approval');
-    if (btnRequest) {
-        btnRequest.addEventListener('click', async () => {
-            const modal = target.querySelector('#request-modal');
-            const select = target.querySelector('#approver-select');
-            
-            // Load approvers - filter for senior approvers if high-value order
-            try {
-                const data = await fetchApprovers(pluginSlug, isHighValue);
-                select.innerHTML = '<option value="">-- Any Available Approver --</option>';
-                
-                // Add Teams Purchasing Channel option for non-high-value orders
-                if (!isHighValue) {
-                    select.innerHTML += '<option value="teams_channel">📢 Teams Purchasing Channel</option>';
-                }
-                
-                data.results.forEach(user => {
-                    select.innerHTML += `<option value="${user.id}">${user.full_name} (${user.username})</option>`;
-                });
-            } catch (e) {
-                console.error('Failed to load approvers:', e);
-            }
-            
-            modal.style.display = 'block';
-        });
+function P({
+  opened: r,
+  onClose: o,
+  onSuccess: t,
+  orderId: i,
+  pluginSlug: p,
+  isApprove: d,
+  api: v
+}) {
+  const [m, f] = c(!1), [n, h] = c(null), [T, g] = c("");
+  L(() => {
+    r && (h(null), g(""));
+  }, [r]);
+  async function A() {
+    f(!0), h(null);
+    try {
+      const u = d ? "approve" : "reject", _ = await v.post(
+        `/plugin/${p}/po/${i}/${u}/`,
+        { notes: T }
+      );
+      _.success ? (g(""), t(), o()) : h(_.error || `Failed to ${d ? "approve" : "reject"}`);
+    } catch (u) {
+      h(u instanceof Error ? u.message : "An error occurred");
+    } finally {
+      f(!1);
     }
-
-    // Approve button
-    const btnApprove = target.querySelector('#btn-approve');
-    if (btnApprove) {
-        btnApprove.addEventListener('click', () => {
-            isApproveAction = true;
-            const modal = target.querySelector('#decision-modal');
-            const title = target.querySelector('#decision-title');
-            const submitBtn = target.querySelector('#decision-submit');
-            
-            title.textContent = 'Approve Request';
-            submitBtn.style.backgroundColor = '#4caf50';
-            submitBtn.textContent = 'Approve';
-            target.querySelector('#decision-notes').value = '';
-            
-            modal.style.display = 'block';
-        });
-    }
-
-    // Reject button
-    const btnReject = target.querySelector('#btn-reject');
-    if (btnReject) {
-        btnReject.addEventListener('click', () => {
-            isApproveAction = false;
-            const modal = target.querySelector('#decision-modal');
-            const title = target.querySelector('#decision-title');
-            const submitBtn = target.querySelector('#decision-submit');
-            
-            title.textContent = 'Reject Request';
-            submitBtn.style.backgroundColor = '#f44336';
-            submitBtn.textContent = 'Reject';
-            target.querySelector('#decision-notes').value = '';
-            
-            modal.style.display = 'block';
-        });
-    }
-
-    // Modal cancel buttons
-    const modalCancel = target.querySelector('#modal-cancel');
-    if (modalCancel) {
-        modalCancel.addEventListener('click', () => {
-            target.querySelector('#request-modal').style.display = 'none';
-        });
-    }
-
-    const decisionCancel = target.querySelector('#decision-cancel');
-    if (decisionCancel) {
-        decisionCancel.addEventListener('click', () => {
-            target.querySelector('#decision-modal').style.display = 'none';
-        });
-    }
-
-    // Submit request
-    const modalSubmit = target.querySelector('#modal-submit');
-    if (modalSubmit) {
-        modalSubmit.addEventListener('click', async () => {
-            const approverId = target.querySelector('#approver-select').value;
-            const notes = target.querySelector('#request-notes').value;
-            
-            modalSubmit.disabled = true;
-            modalSubmit.textContent = 'Submitting...';
-            
-            try {
-                const result = await requestApproval(orderId, pluginSlug, approverId, notes);
-                if (result.success) {
-                    target.querySelector('#request-modal').style.display = 'none';
-                    // Refresh the panel
-                    renderPanel(target, contextData);
-                } else {
-                    alert(result.error || 'Failed to request approval');
-                }
-            } catch (e) {
-                alert(`Error: ${e.message}`);
-            }
-            
-            modalSubmit.disabled = false;
-            modalSubmit.textContent = 'Submit Request';
-        });
-    }
-
-    // Submit decision (approve/reject)
-    const decisionSubmit = target.querySelector('#decision-submit');
-    if (decisionSubmit) {
-        decisionSubmit.addEventListener('click', async () => {
-            const notes = target.querySelector('#decision-notes').value;
-            
-            decisionSubmit.disabled = true;
-            decisionSubmit.textContent = 'Submitting...';
-            
-            try {
-                const result = await submitApprovalDecision(orderId, pluginSlug, isApproveAction, notes);
-                if (result.success) {
-                    target.querySelector('#decision-modal').style.display = 'none';
-                    // Refresh the panel
-                    renderPanel(target, contextData);
-                } else {
-                    alert(result.error || 'Failed to submit decision');
-                }
-            } catch (e) {
-                alert(`Error: ${e.message}`);
-            }
-            
-            decisionSubmit.disabled = false;
-            decisionSubmit.textContent = isApproveAction ? 'Approve' : 'Reject';
-        });
-    }
-
-    // Close modals when clicking outside
-    const requestModal = target.querySelector('#request-modal');
-    if (requestModal) {
-        requestModal.addEventListener('click', (e) => {
-            if (e.target === requestModal) {
-                requestModal.style.display = 'none';
-            }
-        });
-    }
-
-    const decisionModal = target.querySelector('#decision-modal');
-    if (decisionModal) {
-        decisionModal.addEventListener('click', (e) => {
-            if (e.target === decisionModal) {
-                decisionModal.style.display = 'none';
-            }
-        });
-    }
+  }
+  return /* @__PURE__ */ s(H, { opened: r, onClose: o, title: d ? "Approve Request" : "Reject Request", size: "md", children: [
+    /* @__PURE__ */ e(U, { visible: m }),
+    /* @__PURE__ */ s(E, { gap: "md", children: [
+      n && /* @__PURE__ */ e(w, { color: "red", icon: /* @__PURE__ */ e(V, { size: 16 }), children: n }),
+      /* @__PURE__ */ e(
+        W,
+        {
+          label: "Notes (optional)",
+          placeholder: `Add any notes for ${d ? "approving" : "rejecting"} this request`,
+          value: T,
+          onChange: (u) => g(u.currentTarget.value),
+          rows: 3
+        }
+      ),
+      /* @__PURE__ */ s(z, { justify: "flex-end", gap: "sm", children: [
+        /* @__PURE__ */ e(b, { variant: "default", onClick: o, children: "Cancel" }),
+        /* @__PURE__ */ e(b, { color: d ? "green" : "red", onClick: A, loading: m, children: d ? "Approve" : "Reject" })
+      ] })
+    ] })
+  ] });
 }
-
-/**
- * Hide panel in certain conditions
- */
-export function isPanelHidden(context) {
-    // Only show for purchase orders
-    return context.model !== 'purchaseorder';
+function oe(r) {
+  var $;
+  const { context: o, api: t } = r, i = (o == null ? void 0 : o.order_id) || (($ = r.target) == null ? void 0 : $.id), p = (o == null ? void 0 : o.plugin_slug) || "approvals", [d, v] = c(!0), [m, f] = c(null), [n, h] = c(null), [T, g] = c(!1), [A, S] = c(!1), [C, q] = c(!1), u = N(async () => {
+    if (!i) {
+      f("No order ID provided"), v(!1);
+      return;
+    }
+    try {
+      v(!0), f(null);
+      const O = await t.get(
+        `/plugin/${p}/po/${i}/status/`
+      );
+      h(O);
+    } catch (O) {
+      f(O instanceof Error ? O.message : "Failed to load approval status");
+    } finally {
+      v(!1);
+    }
+  }, [i, p, t]);
+  L(() => {
+    u();
+  }, [u]);
+  const _ = N(() => {
+    u();
+  }, [u]);
+  if (d && !n)
+    return /* @__PURE__ */ s(E, { align: "center", p: "md", children: [
+      /* @__PURE__ */ e(K, { size: "md" }),
+      /* @__PURE__ */ e(y, { size: "sm", c: "dimmed", children: "Loading approval status..." })
+    ] });
+  if (m && !n)
+    return /* @__PURE__ */ e(w, { color: "red", title: "Error", icon: /* @__PURE__ */ e(k, { size: 16 }), children: m });
+  if (!n)
+    return /* @__PURE__ */ e(w, { color: "yellow", title: "No Data", children: "Unable to load approval status" });
+  let R, l;
+  return n.is_fully_approved ? (R = "green", l = "✓ Approved") : n.has_pending ? (R = "yellow", l = `${n.approved_count}/${n.total_required} (Pending)`) : (R = "blue", l = `${n.approved_count}/${n.total_required}`), /* @__PURE__ */ s(E, { gap: "md", p: "md", children: [
+    /* @__PURE__ */ s(z, { justify: "space-between", align: "center", children: [
+      /* @__PURE__ */ e(y, { fw: 600, size: "lg", children: "Approval Status" }),
+      /* @__PURE__ */ e(F, { color: R, variant: "filled", size: "lg", children: l })
+    ] }),
+    n.is_high_value && /* @__PURE__ */ e(
+      w,
+      {
+        color: "orange",
+        icon: /* @__PURE__ */ e(k, { size: 16 }),
+        title: "High Value Order",
+        children: "This order requires approval from a senior approver"
+      }
+    ),
+    /* @__PURE__ */ e(ne, { approvals: n.approvals }),
+    /* @__PURE__ */ s(z, { gap: "sm", children: [
+      n.can_request_approval && /* @__PURE__ */ e(
+        b,
+        {
+          leftSection: /* @__PURE__ */ e(Z, { size: 16 }),
+          onClick: () => g(!0),
+          children: "Request Approval"
+        }
+      ),
+      n.user_can_approve && /* @__PURE__ */ s(Y, { children: [
+        /* @__PURE__ */ e(
+          b,
+          {
+            color: "green",
+            leftSection: /* @__PURE__ */ e(D, { size: 16 }),
+            onClick: () => S(!0),
+            children: "Approve"
+          }
+        ),
+        /* @__PURE__ */ e(
+          b,
+          {
+            color: "red",
+            leftSection: /* @__PURE__ */ e(ee, { size: 16 }),
+            onClick: () => q(!0),
+            children: "Reject"
+          }
+        )
+      ] }),
+      n.is_fully_approved && /* @__PURE__ */ e(Q, { withBorder: !0, p: "sm", bg: "green.0", children: /* @__PURE__ */ s(z, { gap: "xs", children: [
+        /* @__PURE__ */ e(D, { size: 16, color: "green" }),
+        /* @__PURE__ */ e(y, { size: "sm", c: "green.8", fw: 500, children: "Order can now be placed" })
+      ] }) })
+    ] }),
+    !n.can_request_approval && !n.user_can_approve && !n.is_fully_approved && /* @__PURE__ */ e(y, { size: "sm", c: "dimmed", children: n.can_request_reason || n.user_can_approve_reason || "Waiting for approval action" }),
+    /* @__PURE__ */ e(
+      te,
+      {
+        opened: T,
+        onClose: () => g(!1),
+        onSuccess: _,
+        orderId: i,
+        pluginSlug: p,
+        isHighValue: n.is_high_value,
+        api: t
+      }
+    ),
+    /* @__PURE__ */ e(
+      P,
+      {
+        opened: A,
+        onClose: () => S(!1),
+        onSuccess: _,
+        orderId: i,
+        pluginSlug: p,
+        isApprove: !0,
+        api: t
+      }
+    ),
+    /* @__PURE__ */ e(
+      P,
+      {
+        opened: C,
+        onClose: () => q(!1),
+        onSuccess: _,
+        orderId: i,
+        pluginSlug: p,
+        isApprove: !1,
+        api: t
+      }
+    )
+  ] });
 }
+const B = /* @__PURE__ */ new WeakMap();
+function le(r, o) {
+  const t = B.get(r);
+  t && t.unmount();
+  const i = x(r);
+  B.set(r, i), i.render(G(oe, o));
+}
+function ae(r) {
+  return r.model !== "purchaseorder";
+}
+const pe = { renderPanel: le, isPanelHidden: ae };
+export {
+  pe as default,
+  ae as isPanelHidden,
+  le as renderPanel
+};
+//# sourceMappingURL=approvals_panel.js.map

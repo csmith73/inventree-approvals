@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "inventree-approvals"
-version = "1.0.0"
+version = "2.0.0"
 description = "Purchase Order Approvals Plugin for InvenTree"
 readme = "README.md"
 license = {text = "MIT"}
@@ -41,4 +41,8 @@ POApprovalsPlugin = "inventree_approvals.approvals_plugin:POApprovalsPlugin"
 where = ["."]
 
 [tool.setuptools.package-data]
-"inventree_approvals" = ["static/**/*"]
+"inventree_approvals" = [
+    "static/**/*",
+    "static/*.js",
+    "static/*.js.map",
+]

@@ -2,6 +2,8 @@
 
 A plugin for [InvenTree](https://inventree.org) that adds an approval workflow to Purchase Orders.
 
+> **Version 2.0** - Updated for InvenTree's new React-based UI plugin system. Requires InvenTree 0.17.0 or later.
+
 ## Features
 
 - **Single Approval Workflow**: Each Purchase Order requires one approval before it can be placed
@@ -123,6 +125,59 @@ The `/plugin/approvals/users/` endpoint accepts:
 | Parameter | Description |
 |-----------|-------------|
 | `is_high_value=true` | Filter to only show senior approvers |
+
+## Development
+
+### Building the Frontend
+
+The plugin UI is built with React and uses the `@inventreedb/ui` npm package for integration with InvenTree's new UI plugin system. The frontend source code is in `inventree_approvals/frontend/`.
+
+To build the frontend:
+
+```bash
+cd inventree_approvals/frontend
+npm install
+npm run build
+```
+
+This will output the compiled JavaScript to `inventree_approvals/static/approvals_panel.js`.
+
+For development with automatic rebuilds:
+
+```bash
+npm run dev
+```
+
+### Project Structure
+
+```
+inventree-approvals/
+├── inventree_approvals/
+│   ├── frontend/           # React frontend source
+│   │   ├── src/
+│   │   │   ├── ApprovalsPanel.tsx    # Main panel component
+│   │   │   ├── ApprovalHistory.tsx   # History table component
+│   │   │   ├── ApprovalModals.tsx    # Request/approve/reject modals
+│   │   │   ├── types.ts              # TypeScript type definitions
+│   │   │   └── index.ts              # Entry point
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── vite.config.ts
+│   ├── static/
+│   │   └── approvals_panel.js        # Built frontend (do not edit directly)
+│   ├── __init__.py
+│   ├── api.py                        # REST API endpoints
+│   ├── approvals_plugin.py           # Plugin class definition
+│   └── helpers.py                    # Approval logic helpers
+└── pyproject.toml
+```
+
+### Technical Notes
+
+- The frontend uses React with Mantine UI components
+- Core libraries (React, Mantine, etc.) are externalized and provided by InvenTree at runtime
+- The plugin implements the `UserInterfaceMixin` and `get_ui_panels()` method using the new `UIFeature` format
+- API calls from the frontend use the plugin context's `api` object which handles authentication automatically
 
 ## License
 

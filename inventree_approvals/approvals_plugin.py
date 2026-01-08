@@ -3,6 +3,8 @@
 This plugin adds an approval workflow to Purchase Orders.
 """
 
+from typing import TYPE_CHECKING
+
 from django.urls import path
 from django.utils.translation import gettext_lazy as _
 
@@ -13,6 +15,9 @@ from plugin.mixins import (
     UserInterfaceMixin,
     ValidationMixin,
 )
+
+if TYPE_CHECKING:
+    from rest_framework.request import Request
 
 
 class POApprovalsPlugin(
@@ -29,11 +34,11 @@ class POApprovalsPlugin(
     SLUG = 'approvals'
     TITLE = _('PO Approvals Plugin')
     DESCRIPTION = _('Adds approval workflow to Purchase Orders')
-    VERSION = '1.0.0'
+    VERSION = '2.0.0'
     AUTHOR = 'InvenTree Approvals Plugin'
     
-    # Minimum InvenTree version required
-    MIN_VERSION = '0.12.0'
+    # Minimum InvenTree version required (updated for new UI plugin system)
+    MIN_VERSION = '0.17.0'
 
     # Plugin settings
     SETTINGS = {
@@ -109,8 +114,20 @@ class POApprovalsPlugin(
             ),
         ]
 
-    def get_ui_panels(self, request, context, **kwargs):
-        """Return custom UI panels for the Purchase Order detail page."""
+    def get_ui_panels(self, request: 'Request', context: dict, **kwargs) -> list:
+        """Return custom UI panels for the Purchase Order detail page.
+
+        This method implements the new UIFeature format required by the
+        InvenTree UI plugin system.
+
+        Args:
+            request: The HTTP request object
+            context: Context data from the UI including target_model and target_id
+            **kwargs: Additional keyword arguments
+
+        Returns:
+            List of UIFeature dicts for panel injection
+        """
         panels = []
         target_model = context.get('target_model', None)
         target_id = context.get('target_id', None)
@@ -121,10 +138,14 @@ class POApprovalsPlugin(
             if self.get_setting('ENABLE_APPROVALS'):
                 panels.append({
                     'key': 'po-approvals-panel',
-                    'title': _('Approvals'),
-                    'description': _('Purchase Order approval workflow'),
+                    'title': str(_('Approvals')),
+                    'description': str(_('Purchase Order approval workflow')),
                     'icon': 'ti:checkbox:outline',
-                    'source': self.plugin_static_file('approvals_panel.js'),
+                    'feature_type': 'panel',
+                    'options': {},
+                    'source': self.plugin_static_file(
+                        'approvals_panel.js:renderPanel'
+                    ),
                     'context': {
                         'order_id': target_id,
                         'plugin_slug': self.slug,
