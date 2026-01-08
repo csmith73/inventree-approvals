@@ -1,0 +1,35 @@
+{
+  "name": "inventree-approvals-ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@inventreedb/ui": "^0.1.0"
+  },
+  "devDependencies": {
+    "@mantine/core": "^7.11.0",
+    "@mantine/hooks": "^7.11.0",
+    "@mantine/notifications": "^7.11.0",
+    "@tabler/icons-react": "^3.6.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.4.5",
+    "vite": "^5.3.1"
+  },
+  "peerDependencies": {
+    "@mantine/core": "^7.11.0",
+    "@mantine/hooks": "^7.11.0",
+    "@mantine/notifications": "^7.11.0",
+    "@tabler/icons-react": "^3.6.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
