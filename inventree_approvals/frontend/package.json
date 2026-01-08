@@ -1,35 +1,28 @@
 {
   "name": "inventree-approvals-ui",
-  "version": "1.0.0",
   "private": true,
+  "version": "2.0.1",
   "type": "module",
   "scripts": {
-    "build": "vite build",
-    "dev": "vite build --watch",
-    "typecheck": "tsc --noEmit"
+    "build": "tsc -b && vite build --emptyOutDir",
+    "dev": "vite --host"
   },
   "dependencies": {
-    "@inventreedb/ui": "^0.1.0"
+    "@inventreedb/ui": "latest",
+    "react": ">= 19.1.2",
+    "react-dom": ">= 19.1.2",
+    "@mantine/core": ">= 8.3.10",
+    "@mantine/hooks": ">= 8.3.10",
+    "@mantine/notifications": ">= 8.3.10"
   },
   "devDependencies": {
-    "@mantine/core": "^7.11.0",
-    "@mantine/hooks": "^7.11.0",
-    "@mantine/notifications": "^7.11.0",
-    "@tabler/icons-react": "^3.6.0",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "typescript": "^5.4.5",
-    "vite": "^5.3.1"
-  },
-  "peerDependencies": {
-    "@mantine/core": "^7.11.0",
-    "@mantine/hooks": "^7.11.0",
-    "@mantine/notifications": "^7.11.0",
-    "@tabler/icons-react": "^3.6.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "@types/node": "^20.11.0",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "^4.7.0",
+    "babel-plugin-macros": "^3.1.0",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.5",
+    "vite-plugin-externals": "^0.6.2"
   }
 }

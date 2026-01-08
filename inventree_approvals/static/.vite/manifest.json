@@ -1,0 +1,8 @@
+{
+  "src/index.tsx": {
+    "file": "approvals_panel.js",
+    "name": "index",
+    "src": "src/index.tsx",
+    "isEntry": true
+  }
+}

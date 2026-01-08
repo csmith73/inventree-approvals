@@ -1,320 +1,60 @@
-import { jsx as e, jsxs as i, Fragment as V } from "react/jsx-runtime";
-import { checkPluginVersion as G } from "@inventreedb/ui";
-import { useState as d, useEffect as L, useCallback as M } from "react";
-import { Text as A, Table as a, Badge as I, Stack as k, Modal as N, LoadingOverlay as F, Alert as j, Select as U, Textarea as H, Group as R, Button as w, Loader as W, Paper as X } from "@mantine/core";
-import { IconAlertCircle as x, IconAlertTriangle as E, IconFileDescription as J, IconCheck as P, IconX as K } from "@tabler/icons-react";
-function Q(r) {
-  switch (r) {
-    case "approved":
-      return { color: "green", label: "✓ Approved" };
-    case "rejected":
-      return { color: "red", label: "✗ Rejected" };
-    case "pending":
-      return { color: "yellow", label: "⏳ Pending" };
-    default:
-      return { color: "gray", label: r };
-  }
-}
-function B(r) {
-  if (!r) return "-";
-  try {
-    return new Date(r).toLocaleString();
-  } catch {
-    return r;
-  }
-}
-function Y({ approvals: r }) {
-  if (r.length === 0)
-    return /* @__PURE__ */ e(A, { c: "dimmed", fs: "italic", size: "sm", children: "No approvals yet" });
-  const s = r.map((t, u) => {
-    const { color: _, label: c } = Q(t.status);
-    return /* @__PURE__ */ i(a.Tr, { children: [
-      /* @__PURE__ */ i(a.Td, { children: [
-        "Level ",
-        t.level
-      ] }),
-      /* @__PURE__ */ e(a.Td, { children: /* @__PURE__ */ e(I, { color: _, variant: "filled", size: "sm", children: c }) }),
-      /* @__PURE__ */ e(a.Td, { children: t.requested_by_name || "-" }),
-      /* @__PURE__ */ e(a.Td, { children: t.status === "pending" ? t.requested_approver_name || "Any" : t.actual_approver_name || "-" }),
-      /* @__PURE__ */ e(a.Td, { children: /* @__PURE__ */ e(A, { size: "xs", c: "dimmed", children: B(t.requested_at) }) }),
-      /* @__PURE__ */ e(a.Td, { children: /* @__PURE__ */ e(A, { size: "xs", c: "dimmed", children: t.status !== "pending" ? B(t.decided_at) : "-" }) })
-    ] }, u);
-  });
-  return /* @__PURE__ */ i(k, { gap: "xs", children: [
-    /* @__PURE__ */ e(A, { fw: 500, size: "sm", children: "Approval History" }),
-    /* @__PURE__ */ i(a, { striped: !0, highlightOnHover: !0, withTableBorder: !0, withColumnBorders: !0, children: [
-      /* @__PURE__ */ e(a.Thead, { children: /* @__PURE__ */ i(a.Tr, { children: [
-        /* @__PURE__ */ e(a.Th, { children: "Level" }),
-        /* @__PURE__ */ e(a.Th, { children: "Status" }),
-        /* @__PURE__ */ e(a.Th, { children: "Requested By" }),
-        /* @__PURE__ */ e(a.Th, { children: "Approver" }),
-        /* @__PURE__ */ e(a.Th, { children: "Requested" }),
-        /* @__PURE__ */ e(a.Th, { children: "Decided" })
-      ] }) }),
-      /* @__PURE__ */ e(a.Tbody, { children: s })
-    ] })
-  ] });
-}
-function Z({
-  opened: r,
-  onClose: s,
-  onSuccess: t,
-  orderId: u,
-  pluginSlug: _,
-  isHighValue: c,
-  context: T
-}) {
-  const [m, l] = d(!1), [q, p] = d(null), [z, y] = d([]), [S, C] = d(null), [$, b] = d("");
-  L(() => {
-    r && (p(null), f());
-  }, [r]);
-  async function f() {
-    var n;
-    try {
-      const o = c ? "?is_high_value=true" : "", v = await ((n = T.api) == null ? void 0 : n.get(
-        `plugin/${_}/users/${o}`
-      )), O = v == null ? void 0 : v.data;
-      y((O == null ? void 0 : O.results) || []);
-    } catch (o) {
-      console.error("Failed to load approvers:", o), y([]);
-    }
-  }
-  async function h() {
-    var n;
-    l(!0), p(null);
-    try {
-      const o = await ((n = T.api) == null ? void 0 : n.post(
-        `plugin/${_}/po/${u}/request/`,
-        {
-          approver_id: S,
-          notes: $
-        }
-      )), v = o == null ? void 0 : o.data;
-      v != null && v.success ? (b(""), C(null), t(), s()) : p((v == null ? void 0 : v.error) || "Failed to request approval");
-    } catch (o) {
-      p(o instanceof Error ? o.message : "An error occurred");
-    } finally {
-      l(!1);
-    }
-  }
-  const g = [
-    { value: "", label: "-- Any Available Approver --" },
-    ...c ? [] : [{ value: "teams_channel", label: "📢 Teams Purchasing Channel" }],
-    ...z.map((n) => ({
-      value: String(n.id),
-      label: `${n.full_name} (${n.username})`
-    }))
-  ];
-  return /* @__PURE__ */ i(N, { opened: r, onClose: s, title: "Request Approval", size: "md", children: [
-    /* @__PURE__ */ e(F, { visible: m }),
-    /* @__PURE__ */ i(k, { gap: "md", children: [
-      q && /* @__PURE__ */ e(j, { color: "red", icon: /* @__PURE__ */ e(x, { size: 16 }), children: q }),
-      /* @__PURE__ */ e(
-        U,
-        {
-          label: "Select Approver (optional)",
-          placeholder: "Select an approver",
-          data: g,
-          value: S,
-          onChange: C,
-          clearable: !0
-        }
-      ),
-      /* @__PURE__ */ e(
-        H,
-        {
-          label: "Notes (optional)",
-          placeholder: "Add any notes for the approver",
-          value: $,
-          onChange: (n) => b(n.currentTarget.value),
-          rows: 3
-        }
-      ),
-      /* @__PURE__ */ i(R, { justify: "flex-end", gap: "sm", children: [
-        /* @__PURE__ */ e(w, { variant: "default", onClick: s, children: "Cancel" }),
-        /* @__PURE__ */ e(w, { onClick: h, loading: m, children: "Submit Request" })
-      ] })
-    ] })
-  ] });
-}
-function D({
-  opened: r,
-  onClose: s,
-  onSuccess: t,
-  orderId: u,
-  pluginSlug: _,
-  isApprove: c,
-  context: T
-}) {
-  const [m, l] = d(!1), [q, p] = d(null), [z, y] = d("");
-  L(() => {
-    r && (p(null), y(""));
-  }, [r]);
-  async function S() {
-    var f;
-    l(!0), p(null);
-    try {
-      const h = c ? "approve" : "reject", g = await ((f = T.api) == null ? void 0 : f.post(
-        `plugin/${_}/po/${u}/${h}/`,
-        { notes: z }
-      )), n = g == null ? void 0 : g.data;
-      n != null && n.success ? (y(""), t(), s()) : p((n == null ? void 0 : n.error) || `Failed to ${c ? "approve" : "reject"}`);
-    } catch (h) {
-      p(h instanceof Error ? h.message : "An error occurred");
-    } finally {
-      l(!1);
-    }
-  }
-  return /* @__PURE__ */ i(N, { opened: r, onClose: s, title: c ? "Approve Request" : "Reject Request", size: "md", children: [
-    /* @__PURE__ */ e(F, { visible: m }),
-    /* @__PURE__ */ i(k, { gap: "md", children: [
-      q && /* @__PURE__ */ e(j, { color: "red", icon: /* @__PURE__ */ e(x, { size: 16 }), children: q }),
-      /* @__PURE__ */ e(
-        H,
-        {
-          label: "Notes (optional)",
-          placeholder: `Add any notes for ${c ? "approving" : "rejecting"} this request`,
-          value: z,
-          onChange: (f) => y(f.currentTarget.value),
-          rows: 3
-        }
-      ),
-      /* @__PURE__ */ i(R, { justify: "flex-end", gap: "sm", children: [
-        /* @__PURE__ */ e(w, { variant: "default", onClick: s, children: "Cancel" }),
-        /* @__PURE__ */ e(w, { color: c ? "green" : "red", onClick: S, loading: m, children: c ? "Approve" : "Reject" })
-      ] })
-    ] })
-  ] });
-}
-function ee({ context: r }) {
-  const s = r.context, t = (s == null ? void 0 : s.order_id) || r.id, u = (s == null ? void 0 : s.plugin_slug) || "approvals", [_, c] = d(!0), [T, m] = d(null), [l, q] = d(null), [p, z] = d(!1), [y, S] = d(!1), [C, $] = d(!1), b = M(async () => {
-    var n;
-    if (!t) {
-      m("No order ID provided"), c(!1);
-      return;
-    }
-    try {
-      c(!0), m(null);
-      const o = await ((n = r.api) == null ? void 0 : n.get(`plugin/${u}/po/${t}/status/`));
-      q(o == null ? void 0 : o.data);
-    } catch (o) {
-      m(o instanceof Error ? o.message : "Failed to load approval status");
-    } finally {
-      c(!1);
-    }
-  }, [t, u, r.api]);
-  L(() => {
-    b();
-  }, [b]);
-  const f = M(() => {
-    b();
-  }, [b]);
-  if (_ && !l)
-    return /* @__PURE__ */ i(k, { align: "center", p: "md", children: [
-      /* @__PURE__ */ e(W, { size: "md" }),
-      /* @__PURE__ */ e(A, { size: "sm", c: "dimmed", children: "Loading approval status..." })
-    ] });
-  if (T && !l)
-    return /* @__PURE__ */ e(j, { color: "red", title: "Error", icon: /* @__PURE__ */ e(E, { size: 16 }), children: T });
-  if (!l)
-    return /* @__PURE__ */ e(j, { color: "yellow", title: "No Data", children: "Unable to load approval status" });
-  let h, g;
-  return l.is_fully_approved ? (h = "green", g = "✓ Approved") : l.has_pending ? (h = "yellow", g = `${l.approved_count}/${l.total_required} (Pending)`) : (h = "blue", g = `${l.approved_count}/${l.total_required}`), /* @__PURE__ */ i(k, { gap: "md", p: "md", children: [
-    /* @__PURE__ */ i(R, { justify: "space-between", align: "center", children: [
-      /* @__PURE__ */ e(A, { fw: 600, size: "lg", children: "Approval Status" }),
-      /* @__PURE__ */ e(I, { color: h, variant: "filled", size: "lg", children: g })
-    ] }),
-    l.is_high_value && /* @__PURE__ */ e(
-      j,
-      {
-        color: "orange",
-        icon: /* @__PURE__ */ e(E, { size: 16 }),
-        title: "High Value Order",
-        children: "This order requires approval from a senior approver"
-      }
-    ),
-    /* @__PURE__ */ e(Y, { approvals: l.approvals }),
-    /* @__PURE__ */ i(R, { gap: "sm", children: [
-      l.can_request_approval && /* @__PURE__ */ e(
-        w,
-        {
-          leftSection: /* @__PURE__ */ e(J, { size: 16 }),
-          onClick: () => z(!0),
-          children: "Request Approval"
-        }
-      ),
-      l.user_can_approve && /* @__PURE__ */ i(V, { children: [
-        /* @__PURE__ */ e(
-          w,
-          {
-            color: "green",
-            leftSection: /* @__PURE__ */ e(P, { size: 16 }),
-            onClick: () => S(!0),
-            children: "Approve"
-          }
-        ),
-        /* @__PURE__ */ e(
-          w,
-          {
-            color: "red",
-            leftSection: /* @__PURE__ */ e(K, { size: 16 }),
-            onClick: () => $(!0),
-            children: "Reject"
-          }
-        )
-      ] }),
-      l.is_fully_approved && /* @__PURE__ */ e(X, { withBorder: !0, p: "sm", bg: "green.0", children: /* @__PURE__ */ i(R, { gap: "xs", children: [
-        /* @__PURE__ */ e(P, { size: 16, color: "green" }),
-        /* @__PURE__ */ e(A, { size: "sm", c: "green.8", fw: 500, children: "Order can now be placed" })
-      ] }) })
-    ] }),
-    !l.can_request_approval && !l.user_can_approve && !l.is_fully_approved && /* @__PURE__ */ e(A, { size: "sm", c: "dimmed", children: l.can_request_reason || l.user_can_approve_reason || "Waiting for approval action" }),
-    /* @__PURE__ */ e(
-      Z,
-      {
-        opened: p,
-        onClose: () => z(!1),
-        onSuccess: f,
-        orderId: t,
-        pluginSlug: u,
-        isHighValue: l.is_high_value,
-        context: r
-      }
-    ),
-    /* @__PURE__ */ e(
-      D,
-      {
-        opened: y,
-        onClose: () => S(!1),
-        onSuccess: f,
-        orderId: t,
-        pluginSlug: u,
-        isApprove: !0,
-        context: r
-      }
-    ),
-    /* @__PURE__ */ e(
-      D,
-      {
-        opened: C,
-        onClose: () => $(!1),
-        onSuccess: f,
-        orderId: t,
-        pluginSlug: u,
-        isApprove: !1,
-        context: r
-      }
-    )
-  ] });
-}
-function ae(r) {
-  return G(r), /* @__PURE__ */ e(ee, { context: r });
-}
-function ie(r) {
-  return r.model !== "purchaseorder";
-}
-export {
-  ie as isPanelHidden,
-  ae as renderPanel
-};
+const B="0.7.0";var t=(e=>(e.api_server_info="",e.user_list="user/",e.user_set_password="user/:id/set-password/",e.user_me="user/me/",e.user_profile="user/profile/",e.user_roles="user/roles/",e.user_token="user/token/",e.user_tokens="user/tokens/",e.user_simple_login="email/generate/",e.user_reset="auth/v1/auth/password/request",e.user_reset_set="auth/v1/auth/password/reset",e.auth_pwd_change="auth/v1/account/password/change",e.auth_login="auth/v1/auth/login",e.auth_login_2fa="auth/v1/auth/2fa/authenticate",e.auth_session="auth/v1/auth/session",e.auth_signup="auth/v1/auth/signup",e.auth_authenticators="auth/v1/account/authenticators",e.auth_recovery="auth/v1/account/authenticators/recovery-codes",e.auth_mfa_reauthenticate="auth/v1/auth/2fa/reauthenticate",e.auth_totp="auth/v1/account/authenticators/totp",e.auth_trust="auth/v1/auth/2fa/trust",e.auth_reauthenticate="auth/v1/auth/reauthenticate",e.auth_email="auth/v1/account/email",e.auth_email_verify="auth/v1/auth/email/verify",e.auth_providers="auth/v1/account/providers",e.auth_provider_redirect="auth/v1/auth/provider/redirect",e.auth_config="auth/v1/config",e.currency_list="currency/exchange/",e.currency_refresh="currency/refresh/",e.all_units="units/all/",e.task_overview="background-task/",e.task_pending_list="background-task/pending/",e.task_scheduled_list="background-task/scheduled/",e.task_failed_list="background-task/failed/",e.api_search="search/",e.settings_global_list="settings/global/",e.settings_user_list="settings/user/",e.news="news/",e.global_status="generic/status/",e.custom_state_list="generic/status/custom/",e.version="version/",e.license="license/",e.group_list="user/group/",e.owner_list="user/owner/",e.ruleset_list="user/ruleset/",e.content_type_list="contenttype/",e.icons="icons/",e.selectionlist_list="selection/",e.selectionlist_detail="selection/:id/",e.barcode="barcode/",e.barcode_history="barcode/history/",e.barcode_link="barcode/link/",e.barcode_unlink="barcode/unlink/",e.barcode_generate="barcode/generate/",e.data_output="data-output/",e.import_session_list="importer/session/",e.import_session_accept_fields="importer/session/:id/accept_fields/",e.import_session_accept_rows="importer/session/:id/accept_rows/",e.import_session_column_mapping_list="importer/column-mapping/",e.import_session_row_list="importer/row/",e.notifications_list="notifications/",e.notifications_readall="notifications/readall/",e.build_order_list="build/",e.build_order_issue="build/:id/issue/",e.build_order_cancel="build/:id/cancel/",e.build_order_hold="build/:id/hold/",e.build_order_complete="build/:id/finish/",e.build_output_complete="build/:id/complete/",e.build_output_create="build/:id/create-output/",e.build_output_scrap="build/:id/scrap-outputs/",e.build_output_delete="build/:id/delete-outputs/",e.build_order_auto_allocate="build/:id/auto-allocate/",e.build_order_allocate="build/:id/allocate/",e.build_order_consume="build/:id/consume/",e.build_order_deallocate="build/:id/unallocate/",e.build_line_list="build/line/",e.build_item_list="build/item/",e.bom_list="bom/",e.bom_item_validate="bom/:id/validate/",e.bom_validate="part/:id/bom-validate/",e.bom_substitute_list="bom/substitute/",e.part_list="part/",e.part_parameter_list="part/parameter/",e.part_parameter_template_list="part/parameter/template/",e.part_thumbs_list="part/thumbs/",e.part_pricing="part/:id/pricing/",e.part_requirements="part/:id/requirements/",e.part_serial_numbers="part/:id/serial-numbers/",e.part_scheduling="part/:id/scheduling/",e.part_pricing_internal="part/internal-price/",e.part_pricing_sale="part/sale-price/",e.part_stocktake_list="part/stocktake/",e.category_list="part/category/",e.category_tree="part/category/tree/",e.category_parameter_list="part/category/parameters/",e.related_part_list="part/related/",e.part_test_template_list="part/test-template/",e.company_list="company/",e.contact_list="company/contact/",e.address_list="company/address/",e.supplier_part_list="company/part/",e.supplier_part_pricing_list="company/price-break/",e.manufacturer_part_list="company/part/manufacturer/",e.manufacturer_part_parameter_list="company/part/manufacturer/parameter/",e.stock_location_list="stock/location/",e.stock_location_type_list="stock/location-type/",e.stock_location_tree="stock/location/tree/",e.stock_item_list="stock/",e.stock_tracking_list="stock/track/",e.stock_test_result_list="stock/test/",e.stock_transfer="stock/transfer/",e.stock_remove="stock/remove/",e.stock_return="stock/return/",e.stock_add="stock/add/",e.stock_count="stock/count/",e.stock_change_status="stock/change_status/",e.stock_merge="stock/merge/",e.stock_assign="stock/assign/",e.stock_status="stock/status/",e.stock_install="stock/:id/install/",e.stock_uninstall="stock/:id/uninstall/",e.stock_serialize="stock/:id/serialize/",e.stock_serial_info="stock/:id/serial-numbers/",e.generate_batch_code="generate/batch-code/",e.generate_serial_number="generate/serial-number/",e.purchase_order_list="order/po/",e.purchase_order_issue="order/po/:id/issue/",e.purchase_order_hold="order/po/:id/hold/",e.purchase_order_cancel="order/po/:id/cancel/",e.purchase_order_complete="order/po/:id/complete/",e.purchase_order_line_list="order/po-line/",e.purchase_order_extra_line_list="order/po-extra-line/",e.purchase_order_receive="order/po/:id/receive/",e.sales_order_list="order/so/",e.sales_order_issue="order/so/:id/issue/",e.sales_order_hold="order/so/:id/hold/",e.sales_order_cancel="order/so/:id/cancel/",e.sales_order_ship="order/so/:id/ship/",e.sales_order_complete="order/so/:id/complete/",e.sales_order_allocate="order/so/:id/allocate/",e.sales_order_allocate_serials="order/so/:id/allocate-serials/",e.sales_order_line_list="order/so-line/",e.sales_order_extra_line_list="order/so-extra-line/",e.sales_order_allocation_list="order/so-allocation/",e.sales_order_shipment_list="order/so/shipment/",e.sales_order_shipment_complete="order/so/shipment/:id/ship/",e.return_order_list="order/ro/",e.return_order_issue="order/ro/:id/issue/",e.return_order_hold="order/ro/:id/hold/",e.return_order_cancel="order/ro/:id/cancel/",e.return_order_complete="order/ro/:id/complete/",e.return_order_receive="order/ro/:id/receive/",e.return_order_line_list="order/ro-line/",e.return_order_extra_line_list="order/ro-extra-line/",e.label_list="label/template/",e.label_print="label/print/",e.report_list="report/template/",e.report_print="report/print/",e.report_snippet="report/snippet/",e.report_asset="report/asset/",e.plugin_list="plugins/",e.plugin_setting_list="plugins/:plugin/settings/",e.plugin_user_setting_list="plugins/:plugin/user-settings/",e.plugin_registry_status="plugins/status/",e.plugin_install="plugins/install/",e.plugin_reload="plugins/reload/",e.plugin_activate="plugins/:key/activate/",e.plugin_uninstall="plugins/:key/uninstall/",e.plugin_admin="plugins/:key/admin/",e.plugin_ui_features_list="plugins/ui/features/:feature_type/",e.plugin_locate_item="locate/",e.machine_types_list="machine/types/",e.machine_driver_list="machine/drivers/",e.machine_registry_status="machine/status/",e.machine_list="machine/",e.machine_restart="machine/:machine/restart/",e.machine_setting_list="machine/:machine/settings/",e.machine_setting_detail="machine/:machine/settings/:config_type/",e.attachment_list="attachment/",e.error_report_list="error-report/",e.project_code_list="project-code/",e.custom_unit_list="units/",e.notes_image_upload="notes-image-upload/",e.email_list="admin/email/",e.email_test="admin/email/test/",e.config_list="admin/config/",e))(t||{});window.LinguiCore.i18n;window.LinguiCore.i18n;t.part_list,t.part_parameter_template_list,t.part_test_template_list,t.supplier_part_list,t.manufacturer_part_list,t.category_list,t.stock_item_list,t.stock_location_list,t.stock_location_type_list,t.stock_tracking_list,t.build_order_list,t.build_line_list,t.build_item_list,t.company_list,t.project_code_list,t.purchase_order_list,t.purchase_order_line_list,t.sales_order_list,t.sales_order_shipment_list,t.return_order_list,t.return_order_line_list,t.address_list,t.contact_list,t.owner_list,t.user_list,t.group_list,t.import_session_list,t.label_list,t.report_list,t.plugin_list,t.content_type_list,t.selectionlist_list,t.error_report_list;function ee(e){var c;const a=((c=e?.version)==null?void 0:c.inventree)||"";B!=a&&console.info(`Plugin version mismatch! Expected version ${B}, got ${a}`)}var z={exports:{}},T={};/**
+ * @license React
+ * react-jsx-runtime.production.js
+ *
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */var P;function te(){if(P)return T;P=1;var e=Symbol.for("react.transitional.element"),c=Symbol.for("react.fragment");function a(i,o,l){var d=null;if(l!==void 0&&(d=""+l),o.key!==void 0&&(d=""+o.key),"key"in o){l={};for(var u in o)u!=="key"&&(l[u]=o[u])}else l=o;return o=l.ref,{$$typeof:e,type:i,key:d,ref:o!==void 0?o:null,props:l}}return T.Fragment=c,T.jsx=a,T.jsxs=a,T}var O;function re(){return O||(O=1,z.exports=te()),z.exports}re();window.MantineCore.ActionIcon;window.MantineCore.Group;window.MantineCore.Tooltip;/**
+ * @license @tabler/icons-react v3.34.1 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */var ae={outline:{xmlns:"http://www.w3.org/2000/svg",width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},filled:{xmlns:"http://www.w3.org/2000/svg",width:24,height:24,viewBox:"0 0 24 24",fill:"currentColor",stroke:"none"}};/**
+ * @license @tabler/icons-react v3.34.1 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const le=window.React.forwardRef,I=window.React.createElement,b=(e,c,a,i)=>{const o=le(({color:l="currentColor",size:d=24,stroke:u=2,title:r,className:g,children:_,...w},h)=>I("svg",{ref:h,...ae[e],width:d,height:d,className:["tabler-icon",`tabler-icon-${c}`,g].join(" "),strokeWidth:u,stroke:l,...w},[r&&I("title",{key:"svg-title"},r),...i.map(([v,k])=>I(v,k)),...Array.isArray(_)?_:[_]]));return o.displayName=`${a}`,o};/**
+ * @license @tabler/icons-react v3.34.1 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const oe=[["path",{d:"M12 5l0 14",key:"svg-0"}],["path",{d:"M5 12l14 0",key:"svg-1"}]];b("outline","plus","Plus",oe);window.MantineCore.ActionIcon;window.MantineCore.Menu;window.MantineCore.Tooltip;window.MantineCore.Progress;window.MantineCore.Stack;window.MantineCore.Text;window.React.useMemo;window.LinguiCore.i18n;window.MantineCore.Badge;window.MantineCore.Skeleton;window.React.useState;window.React.useRef;window.React.useCallback;window.React.useEffect;/**
+ * @license @tabler/icons-react v3.34.1 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const ce=[["path",{d:"M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0",key:"svg-0"}],["path",{d:"M21 21l-6 -6",key:"svg-1"}]];b("outline","search","Search",ce);window.LinguiCore.i18n;window.MantineCore.CloseButton;window.MantineCore.TextInput;window.React.useEffect;window.React.useState;/**
+ * @license @tabler/icons-react v3.34.1 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const se=[["path",{d:"M5 12l14 0",key:"svg-0"}],["path",{d:"M13 18l6 -6",key:"svg-1"}],["path",{d:"M13 6l6 6",key:"svg-2"}]];b("outline","arrow-right","ArrowRight",se);/**
+ * @license @tabler/icons-react v3.34.1 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const ne=[["path",{d:"M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z",key:"svg-0"}],["path",{d:"M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1",key:"svg-1"}]];b("outline","copy","Copy",ne);/**
+ * @license @tabler/icons-react v3.34.1 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const ie=[["path",{d:"M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1",key:"svg-0"}],["path",{d:"M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z",key:"svg-1"}],["path",{d:"M16 5l3 3",key:"svg-2"}]];b("outline","edit","Edit",ie);/**
+ * @license @tabler/icons-react v3.34.1 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const ue=[["path",{d:"M4 7l16 0",key:"svg-0"}],["path",{d:"M10 11l0 6",key:"svg-1"}],["path",{d:"M14 11l0 6",key:"svg-2"}],["path",{d:"M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12",key:"svg-3"}],["path",{d:"M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3",key:"svg-4"}]];b("outline","trash","Trash",ue);/**
+ * @license @tabler/icons-react v3.34.1 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const _e=[["path",{d:"M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0",key:"svg-0"}],["path",{d:"M10 10l4 4m0 -4l-4 4",key:"svg-1"}]];b("outline","circle-x","CircleX",_e);/**
+ * @license @tabler/icons-react v3.34.1 - MIT
+ *
+ * This source code is licensed under the MIT license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const de=[["path",{d:"M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0",key:"svg-0"}],["path",{d:"M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0",key:"svg-1"}],["path",{d:"M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0",key:"svg-2"}]];b("outline","dots","Dots",de);window.LinguiCore.i18n;window.MantineCore.ActionIcon;window.MantineCore.Menu;window.MantineCore.Tooltip;window.React.useMemo;window.React.useState;const me=window.MantineCore.Badge,n=window.MantineCore.Table,S=window.MantineCore.Text,he=window.MantineCore.Stack;function ge(e){switch(e){case"approved":return{color:"green",label:"✓ Approved"};case"rejected":return{color:"red",label:"✗ Rejected"};case"pending":return{color:"yellow",label:"⏳ Pending"};default:return{color:"gray",label:e}}}function D(e){if(!e)return"-";try{return new Date(e).toLocaleString()}catch{return e}}function we({approvals:e}){if(e.length===0)return React.createElement(S,{c:"dimmed",fs:"italic",size:"sm"},"No approvals yet");const c=e.map((a,i)=>{const{color:o,label:l}=ge(a.status);return React.createElement(n.Tr,{key:i},React.createElement(n.Td,null,"Level ",a.level),React.createElement(n.Td,null,React.createElement(me,{color:o,variant:"filled",size:"sm"},l)),React.createElement(n.Td,null,a.requested_by_name||"-"),React.createElement(n.Td,null,a.status==="pending"?a.requested_approver_name||"Any":a.actual_approver_name||"-"),React.createElement(n.Td,null,React.createElement(S,{size:"xs",c:"dimmed"},D(a.requested_at))),React.createElement(n.Td,null,React.createElement(S,{size:"xs",c:"dimmed"},a.status!=="pending"?D(a.decided_at):"-")))});return React.createElement(he,{gap:"xs"},React.createElement(S,{fw:500,size:"sm"},"Approval History"),React.createElement(n,{striped:!0,highlightOnHover:!0,withTableBorder:!0,withColumnBorders:!0},React.createElement(n.Thead,null,React.createElement(n.Tr,null,React.createElement(n.Th,null,"Level"),React.createElement(n.Th,null,"Status"),React.createElement(n.Th,null,"Requested By"),React.createElement(n.Th,null,"Approver"),React.createElement(n.Th,null,"Requested"),React.createElement(n.Th,null,"Decided"))),React.createElement(n.Tbody,null,c)))}const R=window.React.useState,W=window.React.useEffect,X=window.MantineCore.Modal,x=window.MantineCore.Button,ve=window.MantineCore.Select,U=window.MantineCore.Textarea,Y=window.MantineCore.Stack,Q=window.MantineCore.Group,Z=window.MantineCore.LoadingOverlay,K=window.MantineCore.Alert,E=window.TablerIconsReact.IconAlertCircle;function pe({opened:e,onClose:c,onSuccess:a,orderId:i,pluginSlug:o,isHighValue:l,context:d}){const[u,r]=R(!1),[g,_]=R(null),[w,h]=R([]),[v,k]=R(null),[y,p]=R("");W(()=>{e&&(_(null),m())},[e]);async function m(){try{const s=l?"?is_high_value=true":"",A=(await d.api?.get(`plugin/${o}/users/${s}`))?.data;h(A?.results||[])}catch(s){console.error("Failed to load approvers:",s),h([])}}async function C(){r(!0),_(null);try{const q=(await d.api?.post(`plugin/${o}/po/${i}/request/`,{approver_id:v,notes:y}))?.data;q?.success?(p(""),k(null),a(),c()):_(q?.error||"Failed to request approval")}catch(s){_(s instanceof Error?s.message:"An error occurred")}finally{r(!1)}}const f=[{value:"",label:"-- Any Available Approver --"},...l?[]:[{value:"teams_channel",label:"📢 Teams Purchasing Channel"}],...w.map(s=>({value:String(s.id),label:`${s.full_name} (${s.username})`}))];return React.createElement(X,{opened:e,onClose:c,title:"Request Approval",size:"md"},React.createElement(Z,{visible:u}),React.createElement(Y,{gap:"md"},g&&React.createElement(K,{color:"red",icon:React.createElement(E,{size:16})},g),React.createElement(ve,{label:"Select Approver (optional)",placeholder:"Select an approver",data:f,value:v,onChange:k,clearable:!0}),React.createElement(U,{label:"Notes (optional)",placeholder:"Add any notes for the approver",value:y,onChange:s=>p(s.currentTarget.value),rows:3}),React.createElement(Q,{justify:"flex-end",gap:"sm"},React.createElement(x,{variant:"default",onClick:c},"Cancel"),React.createElement(x,{onClick:C,loading:u},"Submit Request"))))}function F({opened:e,onClose:c,onSuccess:a,orderId:i,pluginSlug:o,isApprove:l,context:d}){const[u,r]=R(!1),[g,_]=R(null),[w,h]=R("");W(()=>{e&&(_(null),h(""))},[e]);async function v(){r(!0),_(null);try{const m=l?"approve":"reject",f=(await d.api?.post(`plugin/${o}/po/${i}/${m}/`,{notes:w}))?.data;f?.success?(h(""),a(),c()):_(f?.error||`Failed to ${l?"approve":"reject"}`)}catch(m){_(m instanceof Error?m.message:"An error occurred")}finally{r(!1)}}const k=l?"Approve Request":"Reject Request",y=l?"green":"red",p=l?"Approve":"Reject";return React.createElement(X,{opened:e,onClose:c,title:k,size:"md"},React.createElement(Z,{visible:u}),React.createElement(Y,{gap:"md"},g&&React.createElement(K,{color:"red",icon:React.createElement(E,{size:16})},g),React.createElement(U,{label:"Notes (optional)",placeholder:`Add any notes for ${l?"approving":"rejecting"} this request`,value:w,onChange:m=>h(m.currentTarget.value),rows:3}),React.createElement(Q,{justify:"flex-end",gap:"sm"},React.createElement(x,{variant:"default",onClick:c},"Cancel"),React.createElement(x,{color:y,onClick:v,loading:u},p))))}const M=window.React.useState,fe=window.React.useEffect,G=window.React.useCallback,H=window.MantineCore.Stack,j=window.MantineCore.Group,ke=window.MantineCore.Badge,N=window.MantineCore.Button,L=window.MantineCore.Alert,Re=window.MantineCore.Loader,be=window.MantineCore.Paper,$=window.MantineCore.Text,J=window.TablerIconsReact.IconCheck,ye=window.TablerIconsReact.IconX,V=window.TablerIconsReact.IconAlertTriangle,Ce=window.TablerIconsReact.IconFileDescription;function Me({context:e}){const c=e.context,a=c?.order_id||e.id,i=c?.plugin_slug||"approvals",[o,l]=M(!0),[d,u]=M(null),[r,g]=M(null),[_,w]=M(!1),[h,v]=M(!1),[k,y]=M(!1),p=G(async()=>{if(!a){u("No order ID provided"),l(!1);return}try{l(!0),u(null);const s=await e.api?.get(`plugin/${i}/po/${a}/status/`);g(s?.data)}catch(s){u(s instanceof Error?s.message:"Failed to load approval status")}finally{l(!1)}},[a,i,e.api]);fe(()=>{p()},[p]);const m=G(()=>{p()},[p]);if(o&&!r)return React.createElement(H,{align:"center",p:"md"},React.createElement(Re,{size:"md"}),React.createElement($,{size:"sm",c:"dimmed"},"Loading approval status..."));if(d&&!r)return React.createElement(L,{color:"red",title:"Error",icon:React.createElement(V,{size:16})},d);if(!r)return React.createElement(L,{color:"yellow",title:"No Data"},"Unable to load approval status");let C,f;return r.is_fully_approved?(C="green",f="✓ Approved"):r.has_pending?(C="yellow",f=`${r.approved_count}/${r.total_required} (Pending)`):(C="blue",f=`${r.approved_count}/${r.total_required}`),React.createElement(H,{gap:"md",p:"md"},React.createElement(j,{justify:"space-between",align:"center"},React.createElement($,{fw:600,size:"lg"},"Approval Status"),React.createElement(ke,{color:C,variant:"filled",size:"lg"},f)),r.is_high_value&&React.createElement(L,{color:"orange",icon:React.createElement(V,{size:16}),title:"High Value Order"},"This order requires approval from a senior approver"),React.createElement(we,{approvals:r.approvals}),React.createElement(j,{gap:"sm"},r.can_request_approval&&React.createElement(N,{leftSection:React.createElement(Ce,{size:16}),onClick:()=>w(!0)},"Request Approval"),r.user_can_approve&&React.createElement(React.Fragment,null,React.createElement(N,{color:"green",leftSection:React.createElement(J,{size:16}),onClick:()=>v(!0)},"Approve"),React.createElement(N,{color:"red",leftSection:React.createElement(ye,{size:16}),onClick:()=>y(!0)},"Reject")),r.is_fully_approved&&React.createElement(be,{withBorder:!0,p:"sm",bg:"green.0"},React.createElement(j,{gap:"xs"},React.createElement(J,{size:16,color:"green"}),React.createElement($,{size:"sm",c:"green.8",fw:500},"Order can now be placed")))),!r.can_request_approval&&!r.user_can_approve&&!r.is_fully_approved&&React.createElement($,{size:"sm",c:"dimmed"},r.can_request_reason||r.user_can_approve_reason||"Waiting for approval action"),React.createElement(pe,{opened:_,onClose:()=>w(!1),onSuccess:m,orderId:a,pluginSlug:i,isHighValue:r.is_high_value,context:e}),React.createElement(F,{opened:h,onClose:()=>v(!1),onSuccess:m,orderId:a,pluginSlug:i,isApprove:!0,context:e}),React.createElement(F,{opened:k,onClose:()=>y(!1),onSuccess:m,orderId:a,pluginSlug:i,isApprove:!1,context:e}))}function Te(e){return ee(e),React.createElement(Me,{context:e})}function Se(e){return e.model!=="purchaseorder"}export{Se as isPanelHidden,Te as renderPanel};
 //# sourceMappingURL=approvals_panel.js.map

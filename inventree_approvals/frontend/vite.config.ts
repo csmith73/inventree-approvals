@@ -1,50 +1,63 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { viteExternalsPlugin } from 'vite-plugin-externals';
 import { resolve } from 'path';
 
-// https://vitejs.dev/config/
+/**
+ * The following libraries are externalized to avoid bundling them with the plugin.
+ * These libraries are expected to be provided by the InvenTree core application.
+ */
+export const externalLibs: Record<string, string> = {
+  react: 'React',
+  'react-dom': 'ReactDOM',
+  'ReactDom': 'ReactDOM',
+  '@lingui/core': 'LinguiCore',
+  '@lingui/react': 'LinguiReact',
+  '@mantine/core': 'MantineCore',
+  '@mantine/hooks': 'MantineHooks',
+  '@mantine/notifications': 'MantineNotifications',
+  '@tabler/icons-react': 'TablerIconsReact',
+};
+
+// Just the keys of the externalLibs object
+const externalKeys = Object.keys(externalLibs);
+
+/**
+ * Vite config to build the frontend plugin as an exported module.
+ * This will be distributed in the 'static' directory of the plugin.
+ */
 export default defineConfig({
-  plugins: [react()],
-  build: {
-    lib: {
-      entry: resolve(__dirname, 'src/index.tsx'),
-      name: 'ApprovalsPanel',
-      formats: ['es'],
-      fileName: () => 'approvals_panel.js',
-    },
-    outDir: '../static',
-    emptyOutDir: false,
-    rollupOptions: {
-      // Externalize dependencies that are provided by InvenTree
-      external: [
-        'react',
-        'react-dom',
-        'react/jsx-runtime',
-        '@mantine/core',
-        '@mantine/hooks',
-        '@mantine/notifications',
-        '@tabler/icons-react',
-        '@lingui/core',
-        '@lingui/react',
-        '@inventreedb/ui',
-      ],
-      output: {
-        // Global variable names for externalized dependencies
-        globals: {
-          react: 'React',
-          'react-dom': 'ReactDOM',
-          'react/jsx-runtime': 'ReactJSXRuntime',
-          '@mantine/core': 'MantineCore',
-          '@mantine/hooks': 'MantineHooks',
-          '@mantine/notifications': 'MantineNotifications',
-          '@tabler/icons-react': 'TablerIcons',
-          '@lingui/core': 'LinguiCore',
-          '@lingui/react': 'LinguiReact',
-        },
+  plugins: [
+    react({
+      jsxRuntime: 'classic',
+      babel: {
+        plugins: ['macros'],
       },
-    },
-    minify: true,
+    }),
+    viteExternalsPlugin(externalLibs),
+  ],
+  esbuild: {
+    jsx: 'preserve',
+  },
+  build: {
+    target: 'esnext',
+    cssCodeSplit: false,
+    manifest: true,
     sourcemap: true,
+    rollupOptions: {
+      preserveEntrySignatures: 'exports-only',
+      input: ['./src/index.tsx'],
+      output: {
+        dir: '../static',
+        entryFileNames: 'approvals_panel.js',
+        assetFileNames: 'assets/[name].[ext]',
+        globals: externalLibs,
+      },
+      external: externalKeys,
+    },
+  },
+  optimizeDeps: {
+    exclude: externalKeys,
   },
   resolve: {
     alias: {
