@@ -98,8 +98,9 @@ export function RequestApprovalModal({
   }
 
   // Build select options
+  // For high-value orders, only show the list of senior approvers (no "any approver" option)
   const approverOptions = [
-    { value: '', label: '-- Any Available Approver --' },
+    ...(!isHighValue ? [{ value: '', label: '-- Any Available Approver --' }] : []),
     ...(!isHighValue ? [{ value: 'teams_channel', label: '📢 Teams Purchasing Channel' }] : []),
     ...approvers.map((user) => ({
       value: String(user.id),

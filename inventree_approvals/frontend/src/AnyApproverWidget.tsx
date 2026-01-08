@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Stack,
   Group,
-  Badge,
   Loader,
   Text,
   Anchor,
@@ -17,14 +16,15 @@ import {
 import type { InvenTreePluginContext } from '@inventreedb/ui';
 import type { PendingApproval, PendingApprovalsResponse } from './types';
 
-interface PendingApprovalsWidgetProps {
+interface AnyApproverWidgetProps {
   context: InvenTreePluginContext;
 }
 
 /**
- * Dashboard widget that shows POs pending the current user's approval
+ * Dashboard widget that shows all non-high-value POs pending approval
+ * These can be approved by any approver (not restricted to senior approvers)
  */
-export function PendingApprovalsWidget({ context }: PendingApprovalsWidgetProps) {
+export function AnyApproverWidget({ context }: AnyApproverWidgetProps) {
   const pluginSlug = (context.context as { plugin_slug?: string })?.plugin_slug || 'approvals';
 
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ export function PendingApprovalsWidget({ context }: PendingApprovalsWidgetProps)
       setLoading(true);
       setError(null);
       
-      const response = await context.api?.get(`plugin/${pluginSlug}/pending/`);
+      const response = await context.api?.get(`plugin/${pluginSlug}/pending-any-approver/`);
       const data = response?.data as PendingApprovalsResponse;
       setPendingApprovals(data?.results || []);
     } catch (err) {
@@ -99,7 +99,7 @@ export function PendingApprovalsWidget({ context }: PendingApprovalsWidgetProps)
 
   return (
     <Stack gap="xs" p="xs" h="100%" style={{ overflow: 'auto' }}>
-      <Title order={4}>POs Needing Your Approval</Title>
+      <Title order={4}>Pending Approvals Any Approver</Title>
       <Table striped highlightOnHover withTableBorder>
         <Table.Thead>
           <Table.Tr>
@@ -122,11 +122,6 @@ export function PendingApprovalsWidget({ context }: PendingApprovalsWidgetProps)
                   >
                     {approval.order_reference}
                   </Anchor>
-                  {approval.is_high_value && (
-                    <Badge size="xs" color="orange" variant="light">
-                      High Value
-                    </Badge>
-                  )}
                 </Group>
               </Table.Td>
               <Table.Td>

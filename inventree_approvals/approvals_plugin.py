@@ -34,7 +34,7 @@ class POApprovalsPlugin(
     SLUG = 'approvals'
     TITLE = _('PO Approvals Plugin')
     DESCRIPTION = _('Adds approval workflow to Purchase Orders')
-    VERSION = '2.0.4'
+    VERSION = '2.0.5'
     AUTHOR = 'InvenTree Approvals Plugin'
     
     # Minimum InvenTree version required (updated for new UI plugin system)
@@ -108,6 +108,11 @@ class POApprovalsPlugin(
                 name='approval-pending-list',
             ),
             path(
+                'pending-any-approver/',
+                api.AnyApproverPendingView.as_view(),
+                name='approval-pending-any-approver',
+            ),
+            path(
                 'users/',
                 api.ApproverUsersView.as_view(),
                 name='approval-users',
@@ -174,11 +179,29 @@ class POApprovalsPlugin(
         if self.get_setting('ENABLE_APPROVALS'):
             items.append({
                 'key': 'pending-approvals-widget',
-                'title': str(_('Pending Approvals')),
+                'title': str(_('POs Needing Your Approval')),
                 'description': str(_('Purchase Orders awaiting your approval')),
                 'icon': 'ti:checkbox:outline',
                 'source': self.plugin_static_file(
                     'approvals_panel.js:renderDashboardWidget'
+                ),
+                'context': {
+                    'plugin_slug': self.slug,
+                },
+                'options': {
+                    'width': 4,
+                    'height': 2,
+                },
+            })
+            
+            # Widget showing all non-high-value pending approvals (any approver can approve)
+            items.append({
+                'key': 'any-approver-widget',
+                'title': str(_('Pending Approvals Any Approver')),
+                'description': str(_('Non-high-value POs that any approver can approve')),
+                'icon': 'ti:users:outline',
+                'source': self.plugin_static_file(
+                    'approvals_panel.js:renderAnyApproverWidget'
                 ),
                 'context': {
                     'plugin_slug': self.slug,

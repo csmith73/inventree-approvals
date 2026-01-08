@@ -25,6 +25,8 @@ A plugin for [InvenTree](https://inventree.org) that adds an approval workflow t
    - **Version**: Leave blank for latest
 3. Toggle **Confirm plugin installation** to ON
 4. Click **Install**
+5. It will probably Timeout but the plugin should still have installed
+6. Find the plugin in the list it should be named POApprovals and then Activate it
 5. The server will restart to apply the plugin
 
 ### Via pip

@@ -12,6 +12,7 @@
 import { checkPluginVersion, type InvenTreePluginContext } from '@inventreedb/ui';
 import { ApprovalsPanel } from './ApprovalsPanel';
 import { PendingApprovalsWidget } from './PendingApprovalsWidget';
+import { AnyApproverWidget } from './AnyApproverWidget';
 
 /**
  * Render the approvals panel.
@@ -37,6 +38,19 @@ export function renderPanel(context: InvenTreePluginContext) {
 export function renderDashboardWidget(context: InvenTreePluginContext) {
   checkPluginVersion(context);
   return <PendingApprovalsWidget context={context} />;
+}
+
+/**
+ * Render the any-approver pending approvals dashboard widget.
+ *
+ * This function is called by the InvenTree UI plugin system for dashboard items.
+ * It returns a React component showing all non-high-value POs with pending approvals.
+ *
+ * @param context - Plugin context from InvenTree (includes api, user, theme, etc.)
+ */
+export function renderAnyApproverWidget(context: InvenTreePluginContext) {
+  checkPluginVersion(context);
+  return <AnyApproverWidget context={context} />;
 }
 
 /**

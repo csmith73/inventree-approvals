@@ -318,7 +318,44 @@ class PendingApprovalsView(APIView):
                 'requested_by': pending.get('requested_by_name') if pending else None,
                 'requested_at': pending.get('requested_at') if pending else None,
                 'is_high_value': plugin.is_high_value_order(order),
-                'url': f'/purchasing/purchase-order/{order.pk}',
+                'url': f'/web/purchasing/purchase-order/{order.pk}/po-approvals-panel',
+            })
+
+        return Response({
+            'count': len(result),
+            'results': result,
+        })
+
+
+class AnyApproverPendingView(APIView):
+    """API endpoint to list all pending non-high-value approvals (any approver can approve)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Get list of all non-high-value PurchaseOrders with pending approvals."""
+        if not request.user.has_perm('order.view_purchaseorder'):
+            return Response(
+                {'error': 'Permission denied'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        plugin = get_plugin()
+        pending_orders = helpers.get_any_approver_pending_orders(plugin)
+
+        result = []
+        for order in pending_orders:
+            pending = helpers.get_pending_approval(order)
+            result.append({
+                'order_id': order.pk,
+                'order_reference': order.reference,
+                'order_total': str(order.total_price) if order.total_price else None,
+                'supplier': order.supplier.name if order.supplier else None,
+                'approval_level': pending.get('level') if pending else None,
+                'requested_by': pending.get('requested_by_name') if pending else None,
+                'requested_at': pending.get('requested_at') if pending else None,
+                'is_high_value': False,  # By definition, these are non-high-value
+                'url': f'/web/purchasing/purchase-order/{order.pk}/po-approvals-panel',
             })
 
         return Response({
@@ -456,6 +493,8 @@ This is an automated message from InvenTree.
 def send_teams_webhook(order, request, plugin):
     """Send a Teams webhook message for approval request.
 
+    Uses Adaptive Card format for Power Automate workflow webhooks.
+
     Args:
         order: The PurchaseOrder instance
         request: The HTTP request (for building URLs)
@@ -479,12 +518,55 @@ def send_teams_webhook(order, request, plugin):
         # Get supplier name
         supplier_name = order.supplier.name if order.supplier else 'Unknown Supplier'
         
-        # Build the message with Markdown link for Teams
-        message = f"Requesting approval for {order.reference}-{supplier_name}: [View Order]({order_url})"
+        # Get order total
+        order_total = str(order.total_price) if order.total_price else 'N/A'
 
-        # Teams webhook payload
+        # Power Automate Workflow webhook payload using Adaptive Card format
         payload = {
-            "text": message
+            "type": "message",
+            "attachments": [
+                {
+                    "contentType": "application/vnd.microsoft.card.adaptive",
+                    "contentUrl": None,
+                    "content": {
+                        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                        "type": "AdaptiveCard",
+                        "version": "1.4",
+                        "body": [
+                            {
+                                "type": "TextBlock",
+                                "text": "PO Approval Request",
+                                "weight": "Bolder",
+                                "size": "Medium"
+                            },
+                            {
+                                "type": "FactSet",
+                                "facts": [
+                                    {
+                                        "title": "Order:",
+                                        "value": order.reference
+                                    },
+                                    {
+                                        "title": "Supplier:",
+                                        "value": supplier_name
+                                    },
+                                    {
+                                        "title": "Total:",
+                                        "value": order_total
+                                    }
+                                ]
+                            }
+                        ],
+                        "actions": [
+                            {
+                                "type": "Action.OpenUrl",
+                                "title": "View Order",
+                                "url": order_url
+                            }
+                        ]
+                    }
+                }
+            ]
         }
 
         # Send the webhook
@@ -495,7 +577,8 @@ def send_teams_webhook(order, request, plugin):
             timeout=10,
         )
 
-        if response.status_code == 200:
+        # Power Automate returns 202 Accepted on success
+        if response.status_code in (200, 202):
             logger.info(
                 'Teams webhook sent successfully',
                 order=order.pk,

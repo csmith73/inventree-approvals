@@ -280,3 +280,34 @@ def get_user_pending_approvals(user, plugin):
                 pending_orders.append(order)
     
     return pending_orders
+
+
+def get_any_approver_pending_orders(plugin):
+    """Get all PurchaseOrders with pending approvals that are NOT high-value.
+    
+    These are orders that any approver can approve (not restricted to senior approvers).
+    
+    Args:
+        plugin: The plugin instance
+    
+    Returns:
+        List of PurchaseOrder instances
+    """
+    from order.models import PurchaseOrder
+    from order.status_codes import PurchaseOrderStatusGroups
+    
+    # Only check open orders for efficiency
+    open_orders = PurchaseOrder.objects.filter(
+        status__in=PurchaseOrderStatusGroups.OPEN
+    )
+    
+    pending_orders = []
+    
+    for order in open_orders:
+        pending = get_pending_approval(order)
+        if pending:
+            # Only include non-high-value orders
+            if not plugin.is_high_value_order(order):
+                pending_orders.append(order)
+    
+    return pending_orders
