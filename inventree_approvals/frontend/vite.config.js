@@ -5,6 +5,9 @@ import { resolve } from 'path';
 /**
  * The following libraries are externalized to avoid bundling them with the plugin.
  * These libraries are expected to be provided by the InvenTree core application.
+ *
+ * IMPORTANT: Only include libraries that InvenTree actually exposes as globals.
+ * Other libraries (like @tabler/icons-react, @mantine/hooks) must be bundled.
  */
 export var externalLibs = {
     react: 'React',
@@ -13,9 +16,7 @@ export var externalLibs = {
     '@lingui/core': 'LinguiCore',
     '@lingui/react': 'LinguiReact',
     '@mantine/core': 'MantineCore',
-    '@mantine/hooks': 'MantineHooks',
     '@mantine/notifications': 'MantineNotifications',
-    '@tabler/icons-react': 'TablerIconsReact',
 };
 // Just the keys of the externalLibs object
 var externalKeys = Object.keys(externalLibs);
