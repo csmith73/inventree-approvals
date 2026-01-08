@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "inventree-approvals"
-version = "2.0.0"
+version = "2.0.2"
 description = "Purchase Order Approvals Plugin for InvenTree"
 readme = "README.md"
 license = {text = "MIT"}

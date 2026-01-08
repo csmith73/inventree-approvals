@@ -34,11 +34,11 @@ class POApprovalsPlugin(
     SLUG = 'approvals'
     TITLE = _('PO Approvals Plugin')
     DESCRIPTION = _('Adds approval workflow to Purchase Orders')
-    VERSION = '2.0.0'
+    VERSION = '2.0.2'
     AUTHOR = 'InvenTree Approvals Plugin'
     
     # Minimum InvenTree version required (updated for new UI plugin system)
-    MIN_VERSION = '0.17.0'
+    MIN_VERSION = '1.0.0'
 
     # Plugin settings
     SETTINGS = {
