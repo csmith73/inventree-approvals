@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: resolve(__dirname, 'src/index.tsx'),
       name: 'ApprovalsPanel',
       formats: ['es'],
       fileName: () => 'approvals_panel.js',
@@ -26,6 +26,7 @@ export default defineConfig({
         '@tabler/icons-react',
         '@lingui/core',
         '@lingui/react',
+        '@inventreedb/ui',
       ],
       output: {
         // Global variable names for externalized dependencies

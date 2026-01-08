@@ -2,6 +2,9 @@
  * Type definitions for the Approvals Panel plugin.
  */
 
+// Re-export the InvenTree plugin context type
+export type { InvenTreePluginContext } from '@inventreedb/ui';
+
 /**
  * Approval status enum
  */
@@ -91,34 +94,9 @@ export interface ApprovalDecisionResponse {
 }
 
 /**
- * Plugin context passed from the backend
+ * Plugin context passed from the backend (custom context)
  */
-export interface ApprovalsPanelContext {
+export interface ApprovalsPluginCustomContext {
   order_id: number;
   plugin_slug: string;
-}
-
-/**
- * InvenTree Plugin Panel props (from @inventreedb/ui)
- */
-export interface PluginPanelProps {
-  context: ApprovalsPanelContext;
-  target: {
-    model: string;
-    id: number;
-  };
-  user: {
-    id: number;
-    username: string;
-    is_staff: boolean;
-    is_superuser: boolean;
-  };
-  api: {
-    get: <T>(url: string) => Promise<T>;
-    post: <T>(url: string, data?: Record<string, unknown>) => Promise<T>;
-    put: <T>(url: string, data?: Record<string, unknown>) => Promise<T>;
-    delete: <T>(url: string) => Promise<T>;
-  };
-  navigate: (url: string) => void;
-  host: string;
 }

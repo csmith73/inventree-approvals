@@ -10,12 +10,12 @@ import {
   Alert,
 } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
+import type { InvenTreePluginContext } from '@inventreedb/ui';
 import type {
   ApproverUser,
   ApproverUsersResponse,
   RequestApprovalResponse,
   ApprovalDecisionResponse,
-  PluginPanelProps,
 } from './types';
 
 interface RequestModalProps {
@@ -25,7 +25,7 @@ interface RequestModalProps {
   orderId: number;
   pluginSlug: string;
   isHighValue: boolean;
-  api: PluginPanelProps['api'];
+  context: InvenTreePluginContext;
 }
 
 /**
@@ -38,7 +38,7 @@ export function RequestApprovalModal({
   orderId,
   pluginSlug,
   isHighValue,
-  api,
+  context,
 }: RequestModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,10 +57,11 @@ export function RequestApprovalModal({
   async function loadApprovers() {
     try {
       const params = isHighValue ? '?is_high_value=true' : '';
-      const response = await api.get<ApproverUsersResponse>(
-        `/plugin/${pluginSlug}/users/${params}`
+      const response = await context.api?.get(
+        `plugin/${pluginSlug}/users/${params}`
       );
-      setApprovers(response.results);
+      const data = response?.data as ApproverUsersResponse;
+      setApprovers(data?.results || []);
     } catch (err) {
       console.error('Failed to load approvers:', err);
       setApprovers([]);
@@ -72,21 +73,22 @@ export function RequestApprovalModal({
     setError(null);
 
     try {
-      const response = await api.post<RequestApprovalResponse>(
-        `/plugin/${pluginSlug}/po/${orderId}/request/`,
+      const response = await context.api?.post(
+        `plugin/${pluginSlug}/po/${orderId}/request/`,
         {
           approver_id: selectedApprover,
           notes: notes,
         }
       );
+      const data = response?.data as RequestApprovalResponse;
 
-      if (response.success) {
+      if (data?.success) {
         setNotes('');
         setSelectedApprover(null);
         onSuccess();
         onClose();
       } else {
-        setError(response.error || 'Failed to request approval');
+        setError(data?.error || 'Failed to request approval');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -153,7 +155,7 @@ interface DecisionModalProps {
   orderId: number;
   pluginSlug: string;
   isApprove: boolean;
-  api: PluginPanelProps['api'];
+  context: InvenTreePluginContext;
 }
 
 /**
@@ -166,7 +168,7 @@ export function ApprovalDecisionModal({
   orderId,
   pluginSlug,
   isApprove,
-  api,
+  context,
 }: DecisionModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -185,17 +187,18 @@ export function ApprovalDecisionModal({
 
     try {
       const endpoint = isApprove ? 'approve' : 'reject';
-      const response = await api.post<ApprovalDecisionResponse>(
-        `/plugin/${pluginSlug}/po/${orderId}/${endpoint}/`,
+      const response = await context.api?.post(
+        `plugin/${pluginSlug}/po/${orderId}/${endpoint}/`,
         { notes }
       );
+      const data = response?.data as ApprovalDecisionResponse;
 
-      if (response.success) {
+      if (data?.success) {
         setNotes('');
         onSuccess();
         onClose();
       } else {
-        setError(response.error || `Failed to ${isApprove ? 'approve' : 'reject'}`);
+        setError(data?.error || `Failed to ${isApprove ? 'approve' : 'reject'}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

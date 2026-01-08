@@ -15,17 +15,23 @@ import {
   IconAlertTriangle,
   IconFileDescription,
 } from '@tabler/icons-react';
+import type { InvenTreePluginContext } from '@inventreedb/ui';
 import { ApprovalHistory } from './ApprovalHistory';
 import { RequestApprovalModal, ApprovalDecisionModal } from './ApprovalModals';
-import type { ApprovalStatusResponse, PluginPanelProps } from './types';
+import type { ApprovalStatusResponse, ApprovalsPluginCustomContext } from './types';
+
+interface ApprovalsPanelProps {
+  context: InvenTreePluginContext;
+}
 
 /**
  * Main Approvals Panel component
  */
-export function ApprovalsPanel(props: PluginPanelProps) {
-  const { context, api } = props;
-  const orderId = context?.order_id || props.target?.id;
-  const pluginSlug = context?.plugin_slug || 'approvals';
+export function ApprovalsPanel({ context }: ApprovalsPanelProps) {
+  // Get custom context data passed from the backend
+  const customContext = context.context as ApprovalsPluginCustomContext;
+  const orderId = customContext?.order_id || (context.id as number);
+  const pluginSlug = customContext?.plugin_slug || 'approvals';
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +43,7 @@ export function ApprovalsPanel(props: PluginPanelProps) {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
 
   /**
-   * Fetch approval status from the API
+   * Fetch approval status from the API using context.api
    */
   const fetchStatus = useCallback(async () => {
     if (!orderId) {
@@ -49,16 +55,16 @@ export function ApprovalsPanel(props: PluginPanelProps) {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get<ApprovalStatusResponse>(
-        `/plugin/${pluginSlug}/po/${orderId}/status/`
-      );
-      setStatus(response);
+      
+      // Use context.api for authenticated API calls
+      const response = await context.api?.get(`plugin/${pluginSlug}/po/${orderId}/status/`);
+      setStatus(response?.data as ApprovalStatusResponse);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load approval status');
     } finally {
       setLoading(false);
     }
-  }, [orderId, pluginSlug, api]);
+  }, [orderId, pluginSlug, context.api]);
 
   // Fetch status on mount and when orderId changes
   useEffect(() => {
@@ -195,7 +201,7 @@ export function ApprovalsPanel(props: PluginPanelProps) {
         orderId={orderId}
         pluginSlug={pluginSlug}
         isHighValue={status.is_high_value}
-        api={api}
+        context={context}
       />
 
       <ApprovalDecisionModal
@@ -205,7 +211,7 @@ export function ApprovalsPanel(props: PluginPanelProps) {
         orderId={orderId}
         pluginSlug={pluginSlug}
         isApprove={true}
-        api={api}
+        context={context}
       />
 
       <ApprovalDecisionModal
@@ -215,7 +221,7 @@ export function ApprovalsPanel(props: PluginPanelProps) {
         orderId={orderId}
         pluginSlug={pluginSlug}
         isApprove={false}
-        api={api}
+        context={context}
       />
     </Stack>
   );
