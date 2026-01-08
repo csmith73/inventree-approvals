@@ -154,6 +154,43 @@ class POApprovalsPlugin(
 
         return panels
 
+    def get_ui_dashboard_items(self, request: 'Request', context: dict, **kwargs) -> list:
+        """Return custom dashboard items for the InvenTree dashboard.
+
+        This method provides a dashboard widget showing POs that require
+        the current user's approval.
+
+        Args:
+            request: The HTTP request object
+            context: Context data from the UI
+            **kwargs: Additional keyword arguments
+
+        Returns:
+            List of UIFeature dicts for dashboard items
+        """
+        items = []
+
+        # Only add widget if approvals are enabled
+        if self.get_setting('ENABLE_APPROVALS'):
+            items.append({
+                'key': 'pending-approvals-widget',
+                'title': str(_('Pending Approvals')),
+                'description': str(_('Purchase Orders awaiting your approval')),
+                'icon': 'ti:checkbox:outline',
+                'source': self.plugin_static_file(
+                    'approvals_panel.js:renderDashboardWidget'
+                ),
+                'context': {
+                    'plugin_slug': self.slug,
+                },
+                'options': {
+                    'width': 4,
+                    'height': 2,
+                },
+            })
+
+        return items
+
     def validate_model_instance(self, instance, deltas=None):
         """Validate Purchase Order instances to enforce approval workflow.
         

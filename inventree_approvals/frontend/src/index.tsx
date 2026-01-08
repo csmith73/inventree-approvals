@@ -1,8 +1,8 @@
 /**
  * InvenTree Approvals Plugin - Frontend Entry Point
  *
- * This file exports the render function that InvenTree's plugin system
- * uses to render the approvals panel.
+ * This file exports the render functions that InvenTree's plugin system
+ * uses to render the approvals panel and dashboard widget.
  *
  * Following the modern InvenTree plugin pattern:
  * - Single argument function that returns a React component
@@ -11,6 +11,7 @@
 
 import { checkPluginVersion, type InvenTreePluginContext } from '@inventreedb/ui';
 import { ApprovalsPanel } from './ApprovalsPanel';
+import { PendingApprovalsWidget } from './PendingApprovalsWidget';
 
 /**
  * Render the approvals panel.
@@ -23,6 +24,19 @@ import { ApprovalsPanel } from './ApprovalsPanel';
 export function renderPanel(context: InvenTreePluginContext) {
   checkPluginVersion(context);
   return <ApprovalsPanel context={context} />;
+}
+
+/**
+ * Render the pending approvals dashboard widget.
+ *
+ * This function is called by the InvenTree UI plugin system for dashboard items.
+ * It returns a React component showing POs awaiting the user's approval.
+ *
+ * @param context - Plugin context from InvenTree (includes api, user, theme, etc.)
+ */
+export function renderDashboardWidget(context: InvenTreePluginContext) {
+  checkPluginVersion(context);
+  return <PendingApprovalsWidget context={context} />;
 }
 
 /**

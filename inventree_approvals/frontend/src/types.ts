@@ -100,3 +100,26 @@ export interface ApprovalsPluginCustomContext {
   order_id: number;
   plugin_slug: string;
 }
+
+/**
+ * Pending approval item from the pending approvals API
+ */
+export interface PendingApproval {
+  order_id: number;
+  order_reference: string;
+  order_total: string | null;
+  supplier: string | null;
+  approval_level: number | null;
+  requested_by: string | null;
+  requested_at: string | null;
+  is_high_value: boolean;
+  url: string;
+}
+
+/**
+ * Response from the pending approvals API
+ */
+export interface PendingApprovalsResponse {
+  count: number;
+  results: PendingApproval[];
+}
