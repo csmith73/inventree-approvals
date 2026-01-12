@@ -34,7 +34,7 @@ class POApprovalsPlugin(
     SLUG = 'approvals'
     TITLE = _('PO Approvals Plugin')
     DESCRIPTION = _('Adds approval workflow to Purchase Orders')
-    VERSION = '2.0.6'
+    VERSION = '2.0.7'
     AUTHOR = 'InvenTree Approvals Plugin'
     
     # Minimum InvenTree version required (updated for new UI plugin system)
@@ -116,6 +116,11 @@ class POApprovalsPlugin(
                 'users/',
                 api.ApproverUsersView.as_view(),
                 name='approval-users',
+            ),
+            path(
+                'po-list/',
+                api.AllPurchaseOrdersWithApprovalsView.as_view(),
+                name='po-list-with-approvals',
             ),
         ]
 
@@ -209,6 +214,43 @@ class POApprovalsPlugin(
                 'options': {
                     'width': 4,
                     'height': 2,
+                },
+            })
+
+        return items
+
+    def get_ui_navigation_items(self, request: 'Request', context: dict, **kwargs) -> list:
+        """Return custom navigation items for the sidebar.
+
+        This method adds a "PO Approvals" navigation item under Purchasing
+        that shows all Purchase Orders with their approval status.
+
+        Args:
+            request: The HTTP request object
+            context: Context data from the UI
+            **kwargs: Additional keyword arguments
+
+        Returns:
+            List of UIFeature dicts for navigation items
+        """
+        items = []
+
+        # Only add navigation if approvals are enabled
+        if self.get_setting('ENABLE_APPROVALS'):
+            items.append({
+                'key': 'po-approvals-nav',
+                'title': str(_('PO Approvals')),
+                'description': str(_('Purchase Orders with approval status')),
+                'icon': 'ti:checkbox:outline',
+                'feature_type': 'navigation',
+                'options': {
+                    'navigation_group': 'purchasing',
+                },
+                'source': self.plugin_static_file(
+                    'approvals_panel.js:renderPOApprovalsPage'
+                ),
+                'context': {
+                    'plugin_slug': self.slug,
                 },
             })
 

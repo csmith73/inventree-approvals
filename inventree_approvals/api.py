@@ -364,6 +364,86 @@ class AnyApproverPendingView(APIView):
         })
 
 
+class AllPurchaseOrdersWithApprovalsView(APIView):
+    """API endpoint to list all purchase orders with their approval status."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Get all PurchaseOrders with approval status data."""
+        if not request.user.has_perm('order.view_purchaseorder'):
+            return Response(
+                {'error': 'Permission denied'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        plugin = get_plugin()
+
+        # Get query params for filtering
+        supplier = request.query_params.get('supplier')
+        status_filter = request.query_params.get('status')
+
+        orders = PurchaseOrder.objects.select_related('supplier').all()
+
+        # Apply filters
+        if supplier:
+            orders = orders.filter(supplier_id=supplier)
+        if status_filter:
+            orders = orders.filter(status=status_filter)
+
+        results = []
+        for order in orders:
+            # Get approval summary from helpers
+            summary = helpers.get_approval_summary(order)
+
+            # Determine approval_status string
+            if summary.get('has_pending'):
+                approval_status = 'pending'
+            elif summary.get('approved_count', 0) >= 1:
+                approval_status = 'approved'
+            elif summary.get('rejected_count', 0) > 0:
+                approval_status = 'rejected'
+            else:
+                approval_status = 'none'
+
+            results.append({
+                'pk': order.pk,
+                'reference': order.reference,
+                'description': order.description,
+                'status': order.status,
+                'status_custom_key': getattr(order, 'status_custom_key', order.status),
+                'supplier': order.supplier_id,
+                'supplier_detail': {
+                    'pk': order.supplier.pk,
+                    'name': order.supplier.name,
+                    'image': order.supplier.image.url if order.supplier.image else None,
+                } if order.supplier else None,
+                'supplier_reference': order.supplier_reference,
+                'line_items': order.line_count,
+                'completed_lines': order.completed_line_count,
+                'total_price': str(order.total_price) if order.total_price else None,
+                'order_currency': order.order_currency,
+                'target_date': order.target_date.isoformat() if order.target_date else None,
+                'creation_date': order.creation_date.isoformat() if order.creation_date else None,
+                'complete_date': order.complete_date.isoformat() if order.complete_date else None,
+                'responsible_detail': {
+                    'pk': order.responsible.pk,
+                    'name': str(order.responsible),
+                } if order.responsible else None,
+                'project_code_detail': {
+                    'pk': order.project_code.pk,
+                    'code': order.project_code.code,
+                } if order.project_code else None,
+                # Approval-specific fields
+                'approval_status': approval_status,
+            })
+
+        return Response({
+            'count': len(results),
+            'results': results,
+        })
+
+
 class ApproverUsersView(APIView):
     """API endpoint to list users who can be selected as approvers."""
 
