@@ -252,11 +252,14 @@ def get_approval_summary(order):
 
 
 def get_user_pending_approvals(user, plugin):
-    """Get all PurchaseOrders where this user has a pending approval request.
+    """Get all PurchaseOrders where this user was specifically requested as approver.
+    
+    Only returns orders where the user was explicitly requested as the approver,
+    not orders where any approver can approve.
     
     Args:
         user: The user to check
-        plugin: The plugin instance
+        plugin: The plugin instance (unused but kept for API compatibility)
     
     Returns:
         List of PurchaseOrder instances
@@ -274,9 +277,9 @@ def get_user_pending_approvals(user, plugin):
     for order in open_orders:
         pending = get_pending_approval(order)
         if pending:
-            # Check if this user can approve
-            can_approve, _ = can_user_approve(user, order, plugin)
-            if can_approve:
+            # Only include if THIS user was specifically requested as approver
+            requested_approver_id = pending.get('requested_approver_id')
+            if requested_approver_id == user.id:
                 pending_orders.append(order)
     
     return pending_orders
