@@ -13,6 +13,7 @@ import { checkPluginVersion, type InvenTreePluginContext } from '@inventreedb/ui
 import { ApprovalsPanel } from './ApprovalsPanel';
 import { PendingApprovalsWidget } from './PendingApprovalsWidget';
 import { AnyApproverWidget } from './AnyApproverWidget';
+import { PurchaseOrderApprovalsPage } from './PurchaseOrderApprovalsPage';
 
 /**
  * Render the approvals panel.
@@ -51,6 +52,19 @@ export function renderDashboardWidget(context: InvenTreePluginContext) {
 export function renderAnyApproverWidget(context: InvenTreePluginContext) {
   checkPluginVersion(context);
   return <AnyApproverWidget context={context} />;
+}
+
+/**
+ * Render the Purchase Orders with Approval Status page.
+ *
+ * This function is called by the InvenTree UI plugin system for navigation items.
+ * It returns a React component showing all POs with their approval status.
+ *
+ * @param context - Plugin context from InvenTree (includes api, user, theme, etc.)
+ */
+export function renderPOApprovalsPage(context: InvenTreePluginContext) {
+  checkPluginVersion(context);
+  return <PurchaseOrderApprovalsPage context={context} />;
 }
 
 /**
