@@ -34,7 +34,7 @@ class POApprovalsPlugin(
     SLUG = 'approvals'
     TITLE = _('PO Approvals Plugin')
     DESCRIPTION = _('Adds approval workflow to Purchase Orders')
-    VERSION = '2.0.7'
+    VERSION = '2.0.8'
     AUTHOR = 'InvenTree Approvals Plugin'
     
     # Minimum InvenTree version required (updated for new UI plugin system)
@@ -69,6 +69,24 @@ class POApprovalsPlugin(
         'TEAMS_WEBHOOK_URL': {
             'name': _('Teams Webhook URL'),
             'description': _('Microsoft Teams incoming webhook URL for posting approval requests'),
+            'default': '',
+            'validator': str,
+        },
+        'CUSTOM_STATE_PENDING_APPROVAL': {
+            'name': _('Pending Approval State Key'),
+            'description': _('Custom state key for "Pending Approval" status (from Admin → Custom States)'),
+            'default': '',
+            'validator': str,
+        },
+        'CUSTOM_STATE_APPROVED': {
+            'name': _('Approved State Key'),
+            'description': _('Custom state key for "Approved" status (from Admin → Custom States)'),
+            'default': '',
+            'validator': str,
+        },
+        'CUSTOM_STATE_REJECTED': {
+            'name': _('Rejected State Key'),
+            'description': _('Custom state key for "Rejected" status (from Admin → Custom States)'),
             'default': '',
             'validator': str,
         },
@@ -327,3 +345,52 @@ class POApprovalsPlugin(
         
         threshold = self.get_high_value_threshold()
         return order.total_price.amount >= threshold
+
+    def get_custom_state_key(self, state_name):
+        """Get the custom state key from settings.
+        
+        Args:
+            state_name: One of 'PENDING_APPROVAL', 'APPROVED', 'REJECTED'
+            
+        Returns:
+            Integer custom state key, or None if not configured
+        """
+        key = self.get_setting(f'CUSTOM_STATE_{state_name}', '')
+        if key:
+            try:
+                return int(key)
+            except (ValueError, TypeError):
+                return None
+        return None
+
+    def set_po_custom_status(self, order, state_name):
+        """Set the custom status on a PurchaseOrder.
+        
+        This updates the status_custom_key field if a custom state is configured
+        for the given state name.
+        
+        Args:
+            order: The PurchaseOrder instance
+            state_name: One of 'PENDING_APPROVAL', 'APPROVED', 'REJECTED'
+            
+        Returns:
+            True if status was updated, False otherwise
+        """
+        key = self.get_custom_state_key(state_name)
+        if key is not None:
+            order.status_custom_key = key
+            order.save(update_fields=['status_custom_key'])
+            return True
+        return False
+
+    def clear_po_custom_status(self, order):
+        """Clear the custom status on a PurchaseOrder.
+        
+        This resets the status_custom_key field to None.
+        
+        Args:
+            order: The PurchaseOrder instance
+        """
+        if order.status_custom_key is not None:
+            order.status_custom_key = None
+            order.save(update_fields=['status_custom_key'])

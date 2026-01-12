@@ -125,6 +125,8 @@ class RequestApprovalView(APIView):
         if teams_channel_selected:
             requested_approver_id = None
 
+        plugin = get_plugin()
+
         # Create the approval request
         approval = helpers.request_approval(
             order,
@@ -133,8 +135,10 @@ class RequestApprovalView(APIView):
             notes=notes,
         )
 
+        # Set custom status to PENDING_APPROVAL if configured
+        plugin.set_po_custom_status(order, 'PENDING_APPROVAL')
+
         # Send notifications
-        plugin = get_plugin()
         email_sent = False
         teams_sent = False
         
@@ -210,6 +214,9 @@ class ApproveView(APIView):
         # Get updated counts
         approval_count = helpers.get_approval_count(order)
         fully_approved = approval_count >= 1
+
+        # Set custom status to APPROVED if configured
+        plugin.set_po_custom_status(order, 'APPROVED')
         
         # Send notification email to requestor
         if plugin.get_setting('SEND_EMAIL_NOTIFICATIONS'):
@@ -273,6 +280,9 @@ class RejectView(APIView):
                 {'error': 'No pending approval to reject'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # Set custom status to REJECTED if configured
+        plugin.set_po_custom_status(order, 'REJECTED')
         
         # Send notification email to requestor
         if plugin.get_setting('SEND_EMAIL_NOTIFICATIONS'):
