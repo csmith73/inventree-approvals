@@ -72,6 +72,11 @@ export function ApprovalHistory({ approvals }: ApprovalHistoryProps) {
             {approval.status !== 'pending' ? formatDate(approval.decided_at) : '-'}
           </Text>
         </Table.Td>
+        <Table.Td>
+          <Text size="xs" style={{ whiteSpace: 'pre-wrap' }}>
+            {approval.notes || '-'}
+          </Text>
+        </Table.Td>
       </Table.Tr>
     );
   });
@@ -88,6 +93,7 @@ export function ApprovalHistory({ approvals }: ApprovalHistoryProps) {
             <Table.Th>Approver</Table.Th>
             <Table.Th>Requested</Table.Th>
             <Table.Th>Decided</Table.Th>
+            <Table.Th>Notes</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>{rows}</Table.Tbody>

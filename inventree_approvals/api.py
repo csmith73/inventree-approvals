@@ -450,6 +450,10 @@ def send_approval_request_email(order, approval, requested_approver, request):
             'approval_level': approval.get('level', 1),
         }
 
+        # Get notes from the approval
+        notes = approval.get('notes', '')
+        notes_section = f"\nNotes from requester:\n{notes}" if notes else ''
+
         # Simple text email (no template rendering for simplicity)
         body = f"""Hi {context['approver_name']},
 
@@ -458,7 +462,7 @@ def send_approval_request_email(order, approval, requested_approver, request):
 Order Details:
 - Reference: {order.reference}
 - Supplier: {order.supplier.name if order.supplier else 'N/A'}
-- Total Value: {order.total_price if order.total_price else 'N/A'}
+- Total Value: {order.total_price if order.total_price else 'N/A'}{notes_section}
 
 View and approve: {order_url}
 
@@ -640,6 +644,10 @@ def send_decision_notification_email(order, approval, approved=True):
         approver_name = approval.get('actual_approver_name', 'Unknown')
         requestor_name = requestor.get_full_name() or requestor.username
 
+        # Get notes from the approval (may contain both request notes and decision notes)
+        notes = approval.get('notes', '')
+        notes_section = f"\nNotes:\n{notes}" if notes else ''
+
         body = f"""Hi {requestor_name},
 
 Your approval request for Purchase Order {order.reference} has been {decision_word.lower()}.
@@ -649,7 +657,7 @@ Order Details:
 - Supplier: {order.supplier.name if order.supplier else 'N/A'}
 - Total Value: {order.total_price if order.total_price else 'N/A'}
 - Decision: {decision_word}
-- Decided by: {approver_name}
+- Decided by: {approver_name}{notes_section}
 
 View order: {order_url}
 
