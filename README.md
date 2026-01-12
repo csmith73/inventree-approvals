@@ -58,6 +58,9 @@ pip install -e .
 | Senior Approvers | Comma-separated usernames who can approve high-value orders | (empty) |
 | Send Email Notifications | Send email when approval is requested | True |
 | Teams Webhook URL | Microsoft Teams incoming webhook URL for posting approval requests | (empty) |
+| Pending Approval State Key | Custom state key for "Pending Approval" status | (empty) |
+| Approved State Key | Custom state key for "Approved" status | (empty) |
+| Rejected State Key | Custom state key for "Rejected" status | (empty) |
 
 ### Senior Approvers Setting
 
@@ -86,6 +89,69 @@ Requesting approval for PO-0001-Acme Corp: https://inventree.example.com/purchas
 ```
 
 Anyone with access to the channel can then view and approve the order.
+
+### Custom Status Configuration (Optional)
+
+This plugin integrates with InvenTree's Custom States feature to provide visual status tracking throughout the approval workflow. When configured, approval states are displayed in PO lists and detail views using InvenTree's standard status badges.
+
+#### Creating Custom States in InvenTree Admin
+
+1. Go to **Admin Panel** → **Custom States**
+2. Create the following custom states for `PurchaseOrderStatus`:
+
+| Name | Label | Reference Status | Logical Key | Custom Key | Color |
+|------|-------|------------------|-------------|------------|-------|
+| `PENDING_APPROVAL` | Pending Approval | PurchaseOrderStatus | 10 (Pending) | 100 | yellow |
+| `APPROVED` | Approved | PurchaseOrderStatus | 10 (Pending) | 101 | green |
+| `REJECTED` | Rejected | PurchaseOrderStatus | 10 (Pending) | 102 | red |
+
+**Important Notes:**
+- The **Logical Key** must be `10` (PENDING) for all three states - this means the PO is still logically in "Pending" status
+- The **Custom Key** values (100, 101, 102) are examples - you can use any unique integers
+- Colors are suggestions - choose what works for your organization
+
+#### Configuring the Plugin
+
+After creating the custom states, configure the plugin settings:
+
+1. Go to **Settings** → **Plugin Settings** → **PO Approvals Plugin**
+2. Enter the custom key values:
+   - **Pending Approval State Key**: `100` (or your chosen key)
+   - **Approved State Key**: `101` (or your chosen key)
+   - **Rejected State Key**: `102` (or your chosen key)
+
+#### Approval Workflow with Custom States
+
+```
+PO Created → PENDING (standard status)
+     ↓
+Request Approval → PENDING_APPROVAL (custom state, key=100)
+     ↓
+  ┌──┴──┐
+  ↓     ↓
+APPROVED   REJECTED
+(key=101)  (key=102)
+  ↓         ↓
+PLACED    (stays rejected until re-requested)
+(standard)
+  ↓
+COMPLETE
+(standard)
+```
+
+#### Benefits of Using Custom States
+
+- **Visual Tracking**: Approval status is visible in all PO views (list, detail, reports)
+- **Filtering**: Filter POs by custom status in the standard PO list
+- **Consistent UI**: Uses InvenTree's native status badge styling
+- **Reports/Exports**: Approval status appears in exports and reports
+
+#### Optional Configuration
+
+Custom states are **optional**. If not configured:
+- The plugin will work normally using metadata-only tracking
+- Approval status will only be visible in the plugin's Approvals panel
+- Standard PO views will show the normal PENDING status
 
 ## Usage
 
